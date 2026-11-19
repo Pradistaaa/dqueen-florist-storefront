@@ -1,0 +1,24 @@
+---
+import { hargaMulai, type Product } from '../lib/katalog';
+interface Props { product: Product }
+const { product } = Astro.props;
+---
+<a class="kartu" href={`/produk/${product.slug}`}>
+  <div class="foto">
+    {product.fotos[0]
+      ? <img src={product.fotos[0]} alt={product.name} loading="lazy" />
+      : <div class="kosong"></div>}
+  </div>
+  <h3>{product.name}</h3>
+  <p>{hargaMulai(product)}</p>
+</a>
+
+<style>
+  .kartu { display: block; text-decoration: none; color: var(--tinta); }
+  .foto { aspect-ratio: 4 / 5; overflow: hidden; background: var(--lilac); border: 1px solid #ffffff14; }
+  img, .kosong { width: 100%; height: 100%; object-fit: cover; display: block; background: var(--lilac); transition: transform 1s var(--ease); }
+  .kartu:hover img { transform: scale(1.05); }
+  h3 { font-size: 1.2rem; margin: .8rem 0 .2rem; color: var(--ivory); transition: color .25s; }
+  .kartu:hover h3 { color: var(--gold-light); }
+  p { margin: 0; color: var(--gold); font-size: .92rem; letter-spacing: .02em; }
+</style>

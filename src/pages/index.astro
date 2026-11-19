@@ -1,16 +1,377 @@
 ---
+import Layout from '../layouts/Layout.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { getKatalog, type Product } from '../lib/katalog';
+
+export const prerender = true;
+
+const { products, categories } = await getKatalog();
+
+// ---- Foto dari produk yang sudah ada ----
+const semuaFoto: string[] = [...new Set(products.flatMap((p) => p.fotos ?? []))];
+// Foto hero: file ada di public/hero/. Ganti nama file di sini kalau mau foto lain.
+const heroFoto = '/hero/hero.jpg';
+const heroFotoHP = '/hero/hero-mobile.jpg';
+const kartuProduct = products.find((p) => p.fotos?.[0]);
+const editorialFoto = semuaFoto[2] ?? semuaFoto[0];
+const editorialFoto2 = semuaFoto[3] ?? semuaFoto[1] ?? semuaFoto[0];
+const galeri = semuaFoto.slice(0, 6);
+
+// ---- Koleksi (kategori) dengan foto ----
+const koleksi = categories.slice(0, 4).map((c) => ({
+  ...c,
+  total: products.filter((p) => p.category?.id === c.id).length,
+  foto: products.find((p) => p.category?.id === c.id && p.fotos?.[0])?.fotos?.[0],
+}));
+
+// ---- Produk ----
+// Isi slug produk andalan lo (lihat kolom slug di Supabase). Kosong = pakai 8 produk pertama.
+const bestsellerSlug: string[] = [];
+const seasonalSlug: string[] = []; // isi 3 slug untuk koleksi musiman. Kosong = otomatis.
+
+const ambilSlug = (slugs: string[], cadangan: Product[]) => {
+  const hasil = slugs.map((s) => products.find((p) => p.slug === s)).filter(Boolean) as Product[];
+  return hasil.length ? hasil : cadangan;
+};
+const bestseller = ambilSlug(bestsellerSlug, products.slice(0, 8));
+const seasonal = ambilSlug(seasonalSlug, products.slice(8, 11).length >= 3 ? products.slice(8, 11) : products.slice(0, 3));
+
+// ---- Seasonal: ganti teks ini tiap musim ----
+const seasonalJudul = 'Hari Ibu & Natal';
+const seasonalDeskripsi = 'Rangkaian pilihan untuk momen penuh kasih di penghujung tahun.';
+
+// ---- Testimoni: isi dengan testimoni ASLI pelanggan. Kosong = section otomatis disembunyikan. ----
+// Contoh format: { nama: 'Nama Pelanggan', momen: 'Hari Ibu', teks: 'Isi testimoni asli...' }
+const testimoni: { nama: string; momen: string; teks: string }[] = [];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout wide>
+  <!-- 3. HERO CINEMATIC -->
+  <section class="hero">
+    <div class="hero-photo">
+      <picture>
+        <source media="(max-width: 768px)" srcset={heroFotoHP} />
+        <img src={heroFoto} alt="Rangkaian mawar dan bunga burgundy dQueen Florist" fetchpriority="high" />
+      </picture>
+    </div>
+    <span class="hero-line hero-line-1" aria-hidden="true"></span>
+    <span class="hero-line hero-line-2" aria-hidden="true"></span>
+
+    <div class="hero-copy">
+      <span class="eyebrow reveal"><i></i>Toko Bunga Online Jakarta<i></i></span>
+      <h1 class="reveal" style="--d:.1s">Kirim Bunga Untuk<br />Momen Yang <em>SPESIAL</em></h1>
+      <p class="reveal" style="--d:.2s">Pilih buket dan rangkaian bunga untuk ulang tahun, anniversary, ucapan, dan momen spesial lainnya. Dirangkai sesuai pesanan dan dikirim ke wilayah Jakarta dan seluruh Indonesia.</p>
+      <a class="btn-pill reveal" style="--d:.3s" href="/katalog">Lihat Koleksi</a>
+    </div>
+
+    {kartuProduct && (
+      <a class="hero-card reveal" style="--d:.45s" href={`/produk/${kartuProduct.slug}`}>
+        <div class="hero-card-img">
+          {kartuProduct.fotos?.[0] ? <img src={kartuProduct.fotos[0]} alt={kartuProduct.name} /> : <div class="ph"></div>}
+        </div>
+        <span class="hero-card-name">{kartuProduct.name}</span>
+        <span class="hero-card-cta">Beli sekarang <b>›</b></span>
+      </a>
+    )}
+  </section>
+
+  <!-- 4. KOLEKSI PILIHAN (asimetris, gaya editorial) -->
+  <section class="sec wrap" id="koleksi">
+    <div class="head reveal">
+      <h2 class="lic"><span class="out">PILIH BUNGA</span><span class="solid">UNTUK MOMENMU</span></h2>
+      <a class="tlink" href="/katalog">Lihat Semua Produk ↗</a>
+    </div>
+
+    <div class="kol-grid">
+      {koleksi.map((c, i) => (
+        <a class={`kol kol-${i + 1} reveal`} style={`--d:${i * 0.1}s`} href={`/katalog#${c.slug}`}>
+          <div class="kol-label"><span>0{i + 1}</span><i></i><b>{c.name}</b></div>
+          <div class="kol-img">
+            {c.foto ? <img src={c.foto} alt={c.name} loading="lazy" /> : <div class="ph"></div>}
+          </div>
+          <span class="kol-cnt">{c.total} desain <b>↗</b></span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- 5. BUKET TERLARIS -->
+  <section class="sec sec-panel" id="bestseller">
+    <div class="wrap">
+      <div class="head reveal">
+        <div>
+          <span class="eyebrow"><i></i>Favorit pelanggan</span>
+          <h2 class="judul">Buket <em>terlaris.</em></h2>
+        </div>
+        <a class="tlink" href="/katalog">Belanja semua ↗</a>
+      </div>
+
+      <ul class="bs-grid">
+        {bestseller.map((p, i) => (
+          <li class="bs-item reveal" style={`--d:${(i % 4) * 0.08}s`}>
+            <span class="bs-no">dQ. / {String(i + 1).padStart(2, '0')}</span>
+            <ProductCard product={p} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- 6. EDITORIAL: KEINDAHAN & PROSES -->
+  <section class="edit wrap" id="cerita">
+    <div class="edit-img reveal">
+      {editorialFoto ? <img src={editorialFoto} alt="Proses merangkai bunga" loading="lazy" /> : <div class="ph"></div>}
+      {editorialFoto2 && <img class="edit-img2" src={editorialFoto2} alt="Detail rangkaian" loading="lazy" />}
+    </div>
+    <div class="edit-copy">
+      <span class="eyebrow reveal"><i></i>Cerita & keahlian kami</span>
+      <h2 class="reveal judul" style="--d:.1s">Setiap detail<br />punya <em>makna.</em></h2>
+      <p class="reveal" style="--d:.15s">
+        Kami percaya setiap bunga punya bahasa. Dari pemilihan bunga hingga sentuhan akhir,
+        setiap rangkaian dibuat satu per satu agar hadiah yang kamu berikan terasa lebih personal.
+      </p>
+      <ol class="steps">
+        <li class="reveal" style="--d:.2s"><b>01</b><div><h3>Dipilih dengan teliti</h3><p>Bunga dipilih sesuai karakter dan pesan dari setiap rangkaian.</p></div></li>
+        <li class="reveal" style="--d:.28s"><b>02</b><div><h3>Dirangkai dengan tangan</h3><p>Komposisi warna dan bentuk disusun rapi, satu buket satu cerita.</p></div></li>
+        <li class="reveal" style="--d:.36s"><b>03</b><div><h3>Finishing yang berkelas</h3><p>Sentuhan akhir yang membuat buket siap diberikan di momen spesial.</p></div></li>
+      </ol>
+      <a class="btn-pill reveal" style="--d:.4s" href="/katalog">Temukan buketmu</a>
+    </div>
+  </section>
+
+  <!-- 7. SEASONAL -->
+  <section class="season" id="seasonal">
+    <div class="wrap season-in">
+      <div class="season-main reveal">
+        <div class="season-img">
+          {seasonal[0]?.fotos?.[0] ? <img src={seasonal[0].fotos[0]} alt={seasonal[0].name} loading="lazy" /> : <div class="ph"></div>}
+        </div>
+      </div>
+      <div class="season-copy">
+        <span class="eyebrow reveal"><i></i>Koleksi musiman</span>
+        <h2 class="reveal judul" style="--d:.1s">{seasonalJudul}</h2>
+        <p class="reveal" style="--d:.15s">{seasonalDeskripsi}</p>
+        <a class="btn-gold reveal" style="--d:.2s" href="/katalog">Lihat koleksi</a>
+        <div class="season-mini">
+          {seasonal.slice(1, 3).map((p, i) => (
+            <a class="mini reveal" style={`--d:${0.25 + i * 0.1}s`} href={`/produk/${p.slug}`}>
+              <div class="mini-img">
+                {p.fotos?.[0] ? <img src={p.fotos[0]} alt={p.name} loading="lazy" /> : <div class="ph"></div>}
+              </div>
+              <span>{p.name}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. GALERI / INSPIRASI -->
+  {galeri.length > 0 && (
+    <section class="sec wrap" id="galeri">
+      <div class="head reveal">
+        <div>
+          <span class="eyebrow"><i></i>Inspirasi</span>
+          <h2 class="judul">Momen yang <em>mekar.</em></h2>
+        </div>
+        <a class="tlink" href="/katalog">Lihat semua ↗</a>
+      </div>
+      <div class="gal">
+        {galeri.map((f, i) => (
+          <a class={`gal-item gal-${i + 1} reveal`} style={`--d:${(i % 3) * 0.08}s`} href="/katalog">
+            <img src={f} alt="Inspirasi rangkaian dQueen Florist" loading="lazy" />
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- 9. TESTIMONI -->
+  {testimoni.length > 0 && (
+    <section class="testi" id="testimoni">
+      <div class="wrap">
+        <div class="head reveal">
+          <div>
+            <span class="eyebrow"><i></i>Kata mereka</span>
+            <h2 class="judul">Cerita dari <em>pelanggan.</em></h2>
+          </div>
+        </div>
+        <div class="testi-grid">
+          {testimoni.map((t, i) => (
+            <blockquote class="reveal" style={`--d:${i * 0.1}s`}>
+              <span class="q">“</span>
+              <p>{t.teks}</p>
+              <footer><b>{t.nama}</b><span>{t.momen}</span></footer>
+            </blockquote>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- PENUTUP -->
+  <section class="closing">
+    <div class="orn reveal"><i></i><span>✦</span><i></i></div>
+    <span class="closing-small reveal">dQueen Florist</span>
+    <h2 class="reveal">Toko Bunga Online Jakarta</h2>
+    <p class="script reveal">untuk setiap kebutuhan anda</p>
+    <div class="orn reveal"><i></i><span>♡</span><i></i></div>
+    <a class="btn-gold reveal" href="/katalog">Jelajahi koleksi</a>
+  </section>
+</Layout>
+
+<style>
+  .wrap { max-width: 84rem; margin: 0 auto; padding: 0 2rem; }
+  .sec { padding-top: 7rem; padding-bottom: 7rem; }
+  .sec-panel { background: var(--panel); padding: 7rem 0; border-top: 1px solid #ffffff10; border-bottom: 1px solid #ffffff10; }
+  .ph { width: 100%; height: 100%; min-height: 200px; background: linear-gradient(135deg, #3a1a24, #14090d); }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  em { font-style: italic; font-weight: 400; color: var(--gold-light); }
+
+  .eyebrow { display: inline-flex; align-items: center; gap: .9rem; font: 400 .68rem/1.4 var(--sans); letter-spacing: .3em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow i { width: 2.2rem; height: 1px; background: var(--gold); opacity: .8; }
+
+  .btn-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 3.2rem; padding: 0 2.4rem; border: 1px solid #f1e8dcaa; border-radius: 999px; text-decoration: none; font: 400 .7rem var(--sans); letter-spacing: .22em; text-transform: uppercase; color: var(--ivory); transition: background .3s, color .3s, border-color .3s, transform .3s var(--ease); }
+  .btn-pill:hover { background: var(--gold); border-color: var(--gold); color: var(--black); transform: translateY(-3px); }
+  .btn-gold { display: inline-flex; align-items: center; justify-content: center; min-height: 3.4rem; padding: 0 3rem; background: var(--gold); color: var(--black); text-decoration: none; font: 500 .72rem var(--sans); letter-spacing: .24em; text-transform: uppercase; transition: background .3s, transform .3s var(--ease); }
+  .btn-gold:hover { background: var(--gold-light); transform: translateY(-3px); }
+
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; margin-bottom: 3.5rem; }
+  .judul { font-size: clamp(2.8rem, 5.6vw, 4.6rem); letter-spacing: -.01em; margin-top: 1rem; color: var(--ivory); }
+  .tlink { font: 400 .7rem var(--sans); letter-spacing: .2em; text-transform: uppercase; text-decoration: none; color: var(--gold-light); padding-bottom: .6rem; border-bottom: 1px solid var(--gold); white-space: nowrap; }
+  .tlink:hover { color: #fff; }
+
+  /* HERO (kutipan struktur: tipografi di tengah, kartu produk melayang) */
+  .hero { position: relative; min-height: min(92vh, 900px); display: grid; place-items: center; text-align: center; overflow: hidden; background: var(--black); }
+  .hero-photo { position: absolute; inset: 0; }
+  .hero-photo picture { display: block; width: 100%; height: 100%; }
+  .hero-photo img { object-position: 58% 50%; filter: brightness(.82) saturate(1.05); animation: zoom 20s ease-out both; }
+  .hero-photo::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 55% at 50% 48%, #0a0708b3 0%, #0a070866 70%, #0a070833 100%), linear-gradient(0deg, #0a0708 0%, transparent 28%), linear-gradient(180deg, #0a070899 0%, transparent 22%); }
+  @keyframes zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
+  .hero-line { position: absolute; top: 0; bottom: 0; width: 1px; background: #ffffff14; z-index: 1; }
+  .hero-line-1 { left: 22%; }
+  .hero-line-2 { right: 22%; }
+  .hero-copy { position: relative; z-index: 2; padding: 6rem 1.5rem 8rem; max-width: 62rem; }
+  .hero h1 { text-shadow: 0 2px 30px #000a; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 1.02; letter-spacing: .01em; text-transform: uppercase; font-weight: 400; margin: 1.8rem 0 1.6rem; color: var(--ivory); }
+  .hero h1 em { text-transform: none; color: var(--gold-light); }
+  .hero-copy p { max-width: 27rem; margin: 0 auto 2.4rem; color: #d9cdc0; font-size: 1.02rem; line-height: 1.9; }
+  .hero-card { position: absolute; z-index: 3; left: 4rem; bottom: 3.5rem; width: 13.5rem; padding: .6rem; border: 1px solid #ffffff55; border-radius: 1.5rem; background: #0a07088c; backdrop-filter: blur(6px); text-decoration: none; text-align: center; color: var(--ivory); transition: transform .4s var(--ease), border-color .3s; }
+  .hero-card:hover { transform: translateY(-6px); border-color: var(--gold); }
+  .hero-card-img { aspect-ratio: 4/5; border-radius: 1.1rem; overflow: hidden; }
+  .hero-card-name { display: block; margin: .8rem .4rem .7rem; font: 400 .75rem var(--sans); color: #bfb2a5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hero-card-cta { display: block; padding: .7rem 0 .4rem; border-top: 1px solid #ffffff44; font: 400 .65rem var(--sans); letter-spacing: .2em; text-transform: uppercase; }
+  .hero-card-cta b { color: var(--gold); margin-left: .3rem; }
+
+  /* KOLEKSI (gaya editorial bernomor) */
+  .lic { margin: 0; display: flex; flex-direction: column; line-height: .95; text-transform: uppercase; font-weight: 400; font-size: clamp(3.4rem, 8.5vw, 7rem); letter-spacing: .01em; }
+  .lic .out { color: transparent; -webkit-text-stroke: 1px #f1e8dcb0; }
+  .lic .solid { color: var(--gold); margin-left: clamp(1.5rem, 5vw, 4rem); }
+  .kol-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
+  .kol { display: block; text-decoration: none; color: var(--ivory); }
+  .kol-1 { margin-top: 0; }
+  .kol-2 { margin-top: 5rem; }
+  .kol-3 { margin-top: 2rem; }
+  .kol-4 { margin-top: 7rem; }
+  .kol-label { display: flex; align-items: center; gap: .8rem; margin-bottom: .9rem; font: 400 .68rem var(--sans); letter-spacing: .2em; text-transform: uppercase; }
+  .kol-label i { width: 2rem; height: 1px; background: #ffffff66; }
+  .kol-label b { font-weight: 400; color: var(--gold-light); }
+  .kol-img { aspect-ratio: 3/4; overflow: hidden; border: 1px solid #ffffff14; }
+  .kol-img img { transition: transform 1.2s var(--ease); }
+  .kol:hover .kol-img img { transform: scale(1.06); }
+  .kol-cnt { display: flex; justify-content: space-between; margin-top: .8rem; font: 400 .65rem var(--sans); letter-spacing: .2em; text-transform: uppercase; color: #a99d90; }
+  .kol-cnt b { color: var(--gold); font-size: 1rem; font-weight: 400; transition: transform .3s; }
+  .kol:hover .kol-cnt b { transform: translate(4px, -4px); }
+
+  /* TERLARIS */
+  .bs-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.4rem 1.1rem; }
+  .bs-item { min-width: 0; background: var(--kartu); padding: 1rem; border: 1px solid #ffffff14; transition: transform .5s var(--ease), box-shadow .5s var(--ease), border-color .3s; }
+  .bs-item:hover { transform: translateY(-6px); box-shadow: 0 24px 44px -24px #000; border-color: var(--gold); }
+  .bs-no { display: block; margin-bottom: .7rem; font: 400 .62rem var(--sans); letter-spacing: .2em; color: var(--gold); }
+
+  /* EDITORIAL */
+  .edit { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; padding-top: 7rem; padding-bottom: 7rem; }
+  .edit-img { position: relative; aspect-ratio: 4/5; margin-bottom: 3rem; border: 1px solid #ffffff14; }
+  .edit-img > img:first-child, .edit-img > .ph { height: 100%; }
+  .edit-img2 { position: absolute; right: -2.5rem; bottom: -3rem; width: 44%; height: auto; aspect-ratio: 1; border: 8px solid var(--kertas); }
+  .edit-copy > p { color: #b9ad9f; line-height: 1.9; max-width: 30rem; margin: 1.4rem 0 2rem; }
+  .steps { list-style: none; margin: 0 0 2.4rem; padding: 0; border-top: 1px solid var(--garis); }
+  .steps li { display: flex; gap: 1.4rem; padding: 1.2rem 0; border-bottom: 1px solid var(--garis); }
+  .steps b { font: 500 1.6rem var(--serif); color: var(--gold); min-width: 2.2rem; }
+  .steps h3 { font-size: 1.35rem; color: var(--ivory); }
+  .steps p { margin: .25rem 0 0; font-size: .92rem; color: #a99d90; }
+
+  /* SEASONAL (hitam pekat, foto di kiri, tombol emas) */
+  .season { background: #000; padding: 7rem 0; border-top: 1px solid #ffffff10; }
+  .season-in { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+  .season-img { aspect-ratio: 4/5; overflow: hidden; box-shadow: 0 0 90px -20px #7a254066; }
+  .season h2 { margin: 1rem 0 1.2rem; }
+  .season-copy > p { color: #b9ad9f; line-height: 1.9; max-width: 26rem; margin: 0 0 2.2rem; }
+  .season-mini { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 3rem; max-width: 26rem; }
+  .mini { text-decoration: none; color: var(--ivory); }
+  .mini-img { aspect-ratio: 1; overflow: hidden; border: 1px solid #ffffff1a; }
+  .mini-img img { transition: transform 1s var(--ease); }
+  .mini:hover .mini-img img { transform: scale(1.07); }
+  .mini span { display: block; margin-top: .6rem; font: 500 1.1rem var(--serif); }
+
+  /* GALERI */
+  .gal { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 210px; gap: .8rem; }
+  .gal-item { position: relative; overflow: hidden; display: block; background: var(--panel); }
+  .gal-item img { transition: transform 1.2s var(--ease); filter: saturate(.95); }
+  .gal-item::after { content: ''; position: absolute; inset: 0; background: var(--burgundy); opacity: 0; transition: opacity .5s; mix-blend-mode: multiply; }
+  .gal-item:hover img { transform: scale(1.07); }
+  .gal-item:hover::after { opacity: .35; }
+  .gal-1 { grid-column: span 2; grid-row: span 2; }
+  .gal-4 { grid-row: span 2; }
+  .gal-5 { grid-column: span 2; }
+
+  /* TESTIMONI */
+  .testi { background: var(--panel); padding: 7rem 0; border-top: 1px solid #ffffff10; }
+  .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  .testi blockquote { margin: 0; background: var(--kartu); border: 1px solid #ffffff14; padding: 2.2rem; }
+  .testi .q { font: 400 4rem/.6 var(--serif); color: var(--gold); }
+  .testi blockquote p { font: 400 1.3rem/1.6 var(--serif); color: var(--ivory); margin: 1rem 0 1.6rem; }
+  .testi footer { display: flex; flex-direction: column; font-size: .8rem; color: #a99d90; }
+  .testi footer b { color: var(--gold-light); letter-spacing: .08em; font-weight: 400; }
+
+  /* PENUTUP (gaya emas ornamen) */
+  .closing { position: relative; overflow: hidden; text-align: center; padding: 8rem 1.5rem; background: radial-gradient(ellipse at 50% 0%, #4a142466, transparent 60%), var(--black); }
+  .orn { display: flex; align-items: center; justify-content: center; gap: 1.2rem; color: var(--gold); margin: 0 auto 2rem; max-width: 22rem; }
+  .orn i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .closing-small { display: block; font: 400 .72rem var(--sans); letter-spacing: .4em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 1.2rem; }
+  .closing h2 { font-size: clamp(3rem, 8vw, 6.4rem); font-weight: 400; letter-spacing: .02em; text-transform: uppercase; color: var(--gold-light); }
+  .closing .script { font: italic 400 clamp(1.8rem, 4vw, 3rem)/1.2 var(--serif); color: var(--gold); margin: .4rem 0 2rem; }
+  .closing .orn:last-of-type { margin-bottom: 2.5rem; }
+
+  @media (prefers-reduced-motion: reduce) { .hero-photo img { animation: none; } }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .sec, .sec-panel, .season, .testi { padding-top: 4.5rem; padding-bottom: 4.5rem; }
+    .wrap { padding: 0 1.25rem; }
+    .hero-card { display: none; }
+    .hero-line { display: none; }
+    .kol-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem 1rem; }
+    .kol-1, .kol-2, .kol-3, .kol-4 { margin-top: 0; }
+    .kol-2, .kol-4 { margin-top: 2.5rem; }
+    .bs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .edit { grid-template-columns: 1fr; gap: 4rem; padding-top: 4.5rem; padding-bottom: 5rem; }
+    .edit-img { max-width: 30rem; }
+    .edit-img2 { right: -1rem; }
+    .season-in { grid-template-columns: 1fr; gap: 3rem; }
+    .gal { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 180px; }
+    .gal-5 { grid-column: auto; }
+    .testi-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .hero { min-height: 620px; }
+    .hero-photo img { object-position: 52% 50%; }
+    .hero-copy { padding: 4rem 1.25rem 5rem; }
+    .hero h1 { font-size: clamp(2.5rem, 11vw, 3.6rem); }
+    .head { flex-direction: column; align-items: flex-start; gap: 1.2rem; margin-bottom: 2.2rem; }
+    .judul { font-size: 2.9rem; }
+    .bs-grid { gap: 1rem .7rem; }
+    .bs-item { padding: .6rem; }
+    .season-mini { max-width: none; }
+    .closing { padding: 5.5rem 1.25rem; }
+  }
+</style>

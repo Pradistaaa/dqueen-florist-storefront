@@ -1,0 +1,88 @@
+---
+import Layout from '../layouts/Layout.astro';
+export const prerender = true;
+---
+<Layout title="Keranjang">
+  <h1 class="judul">Keranjang</h1>
+
+  <p id="kosong" hidden>Keranjang masih kosong. <a href="/katalog">Lihat katalog</a></p>
+
+  <div id="isi" hidden>
+    <ul id="daftar" class="daftar"></ul>
+    <div class="ringkas">
+      <p>Subtotal <strong id="total"></strong></p>
+      <p class="catatan">Harga final dihitung ulang saat pesanan dibuat. Ongkir dihitung di checkout.</p>
+      <a class="lanjut" href="/checkout">Lanjut ke checkout</a>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { ambil, ubahQty, hapus, subtotal, rupiah } from '../lib/keranjang';
+
+  const kosong = document.getElementById('kosong')!;
+  const isi = document.getElementById('isi')!;
+  const daftar = document.getElementById('daftar')!;
+  const total = document.getElementById('total')!;
+
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+
+  function gambar() {
+    const items = ambil();
+    kosong.hidden = items.length > 0;
+    isi.hidden = items.length === 0;
+    daftar.innerHTML = items.map((i) => `
+      <li class="baris">
+        <img src="${esc(i.foto)}" alt="" />
+        <div class="nama">
+          <a href="/produk/${esc(i.slug)}">${esc(i.produk)}</a>
+          <span>${esc(i.varian)}</span>
+          <span>${rupiah(i.harga)}</span>
+        </div>
+        <div class="qty">
+          <button data-min="${esc(i.variantId)}" aria-label="Kurangi jumlah">-</button>
+          <span>${i.qty}</span>
+          <button data-plus="${esc(i.variantId)}" aria-label="Tambah jumlah">+</button>
+        </div>
+        <p class="sub">${rupiah(i.harga * i.qty)}</p>
+        <button class="hapus" data-hapus="${esc(i.variantId)}">Hapus</button>
+      </li>`).join('');
+    total.textContent = rupiah(subtotal());
+  }
+
+  daftar.addEventListener('click', (e) => {
+    const t = (e.target as HTMLElement).closest('button');
+    if (!t) return;
+    const qtyDari = (id: string) => ambil().find((i) => i.variantId === id)?.qty ?? 0;
+    if (t.dataset.plus) ubahQty(t.dataset.plus, qtyDari(t.dataset.plus) + 1);
+    else if (t.dataset.min) ubahQty(t.dataset.min, qtyDari(t.dataset.min) - 1);
+    else if (t.dataset.hapus) hapus(t.dataset.hapus);
+  });
+
+  window.addEventListener('keranjang:berubah', gambar);
+  gambar();
+</script>
+
+<style>
+  .judul { margin: 2.5rem 0 1.5rem; color: var(--ivory); font-size: clamp(2.4rem, 5vw, 3.4rem); }
+  #kosong :global(a), .catatan a { color: var(--gold-light); }
+  .daftar { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--garis); }
+  .daftar :global(.baris) { display: grid; grid-template-columns: 4.5rem 1fr auto; gap: .5rem 1rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--garis); }
+  .daftar :global(img) { width: 4.5rem; aspect-ratio: 4 / 5; object-fit: cover; background: var(--lilac); border: 1px solid #ffffff14; }
+  .daftar :global(.nama) { display: flex; flex-direction: column; }
+  .daftar :global(.nama a) { font-weight: 600; text-decoration: none; color: var(--ivory); }
+  .daftar :global(.nama span) { color: var(--redup); font-size: .95rem; }
+  .daftar :global(.qty) { display: flex; align-items: center; gap: .6rem; }
+  .daftar :global(.qty button) { width: 2rem; height: 2rem; border: 1px solid var(--garis); border-radius: 50%; background: transparent; color: var(--ivory); font: inherit; cursor: pointer; transition: border-color .25s; }
+  .daftar :global(.qty button:hover) { border-color: var(--gold); }
+  .daftar :global(.sub) { margin: 0; font-weight: 600; text-align: right; color: var(--gold-light); }
+  .daftar :global(.hapus) { grid-column: 3; justify-self: end; border: 0; background: none; color: var(--redup); font: inherit; font-size: .9rem; cursor: pointer; text-decoration: underline; }
+  .daftar :global(.hapus:hover) { color: var(--gold-light); }
+  .ringkas { margin-top: 2rem; max-width: 24rem; margin-left: auto; }
+  .ringkas p { margin: 0 0 .5rem; display: flex; justify-content: space-between; font-size: 1.15rem; }
+  .ringkas strong { color: var(--gold-light); }
+  .ringkas .catatan { display: block; font-size: .9rem; color: var(--redup); }
+  .lanjut { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 3.4rem; margin-top: 1rem; font: 500 .78rem var(--sans); letter-spacing: .22em; text-transform: uppercase; text-decoration: none; background: var(--gold); color: var(--black); transition: background .3s, transform .3s var(--ease); }
+  .lanjut:hover { background: var(--gold-light); transform: translateY(-2px); }
+</style>

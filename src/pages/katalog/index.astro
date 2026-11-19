@@ -1,0 +1,51 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { getKatalog } from '../../lib/katalog';
+
+export const prerender = true;
+const { products, categories } = await getKatalog();
+---
+<Layout title="Katalog" description="Katalog buket dQueen Florist.">
+  <header class="kepala">
+    <span class="garis"></span>
+    <h1 class="judul">Katalog</h1>
+    <p>Pilih rangkaian favoritmu, tiap buket dibuat sesuai pesanan.</p>
+  </header>
+
+  <div class="filter" role="group" aria-label="Filter jenis bunga">
+    <button data-filter="semua" aria-pressed="true">Semua</button>
+    {categories.map((c) => <button data-filter={c.slug} aria-pressed="false">{c.name}</button>)}
+  </div>
+
+  <ul class="grid">
+    {products.map((p) => (
+      <li data-kat={p.category?.slug ?? ''}><ProductCard product={p} /></li>
+    ))}
+  </ul>
+</Layout>
+
+<script>
+  const tombol = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const item = document.querySelectorAll<HTMLElement>('[data-kat]');
+
+  function pilih(slug: string) {
+    tombol.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.filter === slug)));
+    item.forEach((i) => { i.hidden = slug !== 'semua' && i.dataset.kat !== slug; });
+    history.replaceState(null, '', slug === 'semua' ? location.pathname : '#' + slug);
+  }
+  tombol.forEach((t) => t.addEventListener('click', () => pilih(t.dataset.filter!)));
+  const awal = location.hash.slice(1);
+  pilih([...tombol].some((t) => t.dataset.filter === awal) ? awal : 'semua');
+</script>
+
+<style>
+  .kepala { text-align: center; padding: 3.5rem 0 2.5rem; }
+  .garis { display: block; width: 1px; height: 3rem; margin: 0 auto 1.4rem; background: linear-gradient(var(--gold), transparent); }
+  .judul { font-size: clamp(2.6rem, 6vw, 4.2rem); letter-spacing: .02em; color: var(--ivory); }
+  .kepala p { margin: .8rem 0 0; color: var(--redup); }
+  .filter { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-bottom: 3rem; }
+  .filter button { font: 500 .7rem var(--sans); letter-spacing: .16em; text-transform: uppercase; padding: .7rem 1.4rem; border: 1px solid var(--garis); border-radius: 999px; background: transparent; color: var(--ivory); cursor: pointer; transition: border-color .25s, background .25s, color .25s; }
+  .filter button:hover { border-color: var(--gold); }
+  .filter button[aria-pressed='true'] { background: var(--gold); border-color: var(--gold); color: var(--black); }
+</style>

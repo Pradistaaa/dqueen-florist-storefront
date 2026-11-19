@@ -1,0 +1,190 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getZona, rupiah } from '../lib/katalog';
+
+export const prerender = true;
+const zona = await getZona();
+---
+<Layout title="Checkout">
+  <h1 class="judul">Checkout</h1>
+
+  <p id="kosong" hidden>Keranjang masih kosong. <a href="/katalog">Lihat katalog</a></p>
+
+  <div id="isi" class="dua" hidden>
+    <form id="form" novalidate>
+      <fieldset>
+        <legend>Pemesan</legend>
+        <label class="f"><span class="l">Nama pemesan</span>
+          <input name="pemesan_nama" autocomplete="name" />
+          <span class="err" id="err-pemesan_nama" hidden></span></label>
+        <label class="f"><span class="l">Nomor WhatsApp</span>
+          <input name="pemesan_wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="081234567890" />
+          <span class="err" id="err-pemesan_wa" hidden></span></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Penerima dan alamat</legend>
+        <label class="f"><span class="l">Nama penerima</span>
+          <input name="penerima_nama" />
+          <span class="err" id="err-penerima_nama" hidden></span></label>
+        <label class="f"><span class="l">Nomor HP penerima</span>
+          <input name="penerima_hp" type="tel" inputmode="tel" placeholder="081234567890" />
+          <span class="err" id="err-penerima_hp" hidden></span></label>
+        <label class="f"><span class="l">Alamat lengkap</span>
+          <textarea name="alamat" rows="3" placeholder="Jalan, nomor, gedung, patokan"></textarea>
+          <span class="err" id="err-alamat" hidden></span></label>
+        <label class="f"><span class="l">Zona pengiriman</span>
+          <select name="zona">
+            <option value="">Pilih zona</option>
+            {zona.map((z) => <option value={z.id} data-fee={z.fee}>{z.name} (+{rupiah(z.fee)})</option>)}
+          </select>
+          {zona.length === 0 && <span class="err">Zona pengiriman belum diisi di database.</span>}
+          <span class="err" id="err-zona" hidden></span></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Waktu kirim</legend>
+        <label class="f"><span class="l">Tanggal kirim</span>
+          <input name="tanggal" type="date" />
+          <span class="err" id="err-tanggal" hidden></span></label>
+        <label class="f"><span class="l">Jam kirim (opsional)</span>
+          <input name="jam" type="time" /></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Kartu ucapan dan catatan</legend>
+        <label class="f"><span class="l">Isi kartu ucapan (opsional)</span>
+          <textarea name="ucapan" rows="3" maxlength="200"></textarea></label>
+        <label class="f"><span class="l">Catatan untuk toko (opsional)</span>
+          <textarea name="catatan" rows="2" maxlength="300"></textarea></label>
+        <label class="f"><span class="l">Kode kupon (opsional)</span>
+          <input name="kupon" autocapitalize="characters" />
+          <span class="bantu">Kupon dicek saat pesanan dibuat.</span></label>
+      </fieldset>
+
+      <button class="kirim" type="submit">Buat pesanan</button>
+      <p id="status" class="status" role="status" hidden></p>
+    </form>
+
+    <aside class="ringkasan">
+      <h2>Pesanan</h2>
+      <ul id="daftar"></ul>
+      <p class="baris"><span>Subtotal</span><span id="sub"></span></p>
+      <p class="baris"><span>Ongkir</span><span id="ongkir"></span></p>
+      <p class="baris total"><span>Total</span><span id="total"></span></p>
+      <p class="bantu">Total akhir dihitung ulang oleh server saat pesanan dibuat.</p>
+    </aside>
+  </div>
+</Layout>
+
+<script>
+  import { ambil, subtotal, rupiah } from '../lib/keranjang';
+
+  const kolom = ['pemesan_nama', 'pemesan_wa', 'penerima_nama', 'penerima_hp', 'alamat', 'zona', 'tanggal', 'jam', 'ucapan', 'catatan', 'kupon'];
+  const DRAFT = 'dq-checkout';
+  const form = document.getElementById('form') as HTMLFormElement;
+  const el = (k: string) => form.elements.namedItem(k) as HTMLInputElement;
+  const val = (k: string) => el(k).value.trim();
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+
+  const items = ambil();
+  document.getElementById('kosong')!.hidden = items.length > 0;
+  document.getElementById('isi')!.hidden = items.length === 0;
+
+  // tanggal paling awal = hari ini (waktu lokal)
+  const d = new Date();
+  const hariIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  el('tanggal').min = hariIni;
+
+  // pulihkan isian yang tersimpan
+  try {
+    const simpanan = JSON.parse(localStorage.getItem(DRAFT) ?? '{}');
+    for (const k of kolom) if (typeof simpanan[k] === 'string') el(k).value = simpanan[k];
+  } catch {}
+
+  function ringkasan() {
+    document.getElementById('daftar')!.innerHTML = items.map((i) => `
+      <li><span>${i.qty} x ${esc(i.produk)} <small>${esc(i.varian)}</small></span><span>${rupiah(i.harga * i.qty)}</span></li>`).join('');
+    const opsi = (el('zona') as unknown as HTMLSelectElement).selectedOptions[0];
+    const ongkir = opsi?.dataset.fee ? Number(opsi.dataset.fee) : null;
+    document.getElementById('sub')!.textContent = rupiah(subtotal());
+    document.getElementById('ongkir')!.textContent = ongkir === null ? 'Pilih zona' : rupiah(ongkir);
+    document.getElementById('total')!.textContent = rupiah(subtotal() + (ongkir ?? 0));
+  }
+
+  form.addEventListener('input', () => {
+    const data: Record<string, string> = {};
+    for (const k of kolom) data[k] = el(k).value;
+    localStorage.setItem(DRAFT, JSON.stringify(data));
+    ringkasan();
+  });
+
+  const hp = (s: string) => /^(\+62|62|0)8\d{8,12}$/.test(s.replace(/[\s-]/g, ''));
+
+  function cek() {
+    const e: Record<string, string> = {};
+    if (val('pemesan_nama').length < 3) e.pemesan_nama = 'Isi nama pemesan.';
+    if (!hp(val('pemesan_wa'))) e.pemesan_wa = 'Isi nomor WhatsApp yang valid, contoh 081234567890.';
+    if (val('penerima_nama').length < 3) e.penerima_nama = 'Isi nama penerima.';
+    if (!hp(val('penerima_hp'))) e.penerima_hp = 'Isi nomor HP penerima yang valid.';
+    if (val('alamat').length < 15) e.alamat = 'Isi alamat selengkap mungkin.';
+    if (!val('zona')) e.zona = 'Pilih zona pengiriman.';
+    if (!val('tanggal')) e.tanggal = 'Pilih tanggal kirim.';
+    else if (val('tanggal') < hariIni) e.tanggal = 'Tanggal kirim tidak boleh sebelum hari ini.';
+    return e;
+  }
+
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const e = cek();
+    for (const k of kolom) {
+      const box = document.getElementById('err-' + k);
+      if (!box) continue;
+      box.textContent = e[k] ?? '';
+      box.hidden = !e[k];
+      el(k).setAttribute('aria-invalid', String(Boolean(e[k])));
+    }
+    const status = document.getElementById('status')!;
+    const pertama = kolom.find((k) => e[k]);
+    if (pertama) {
+      status.hidden = true;
+      el(pertama).focus();
+      return;
+    }
+    status.textContent = 'Data sudah lengkap. Pesanan belum dikirim ke server, itu dikerjakan di langkah berikutnya.';
+    status.hidden = false;
+  });
+
+  ringkasan();
+</script>
+
+<style>
+  .judul { margin: 2.5rem 0 1.5rem; color: var(--ivory); font-size: clamp(2.4rem, 5vw, 3.4rem); }
+  #kosong :global(a) { color: var(--gold-light); }
+  .dua { display: grid; gap: 2.5rem; }
+  @media (min-width: 860px) {
+    .dua { grid-template-columns: 1.3fr 1fr; align-items: start; }
+    .ringkasan { position: sticky; top: 6rem; }
+  }
+  fieldset { border: 0; padding: 0; margin: 0 0 2rem; }
+  legend { font: 500 1.5rem var(--serif); margin-bottom: .9rem; padding: 0; color: var(--gold-light); }
+  .f { display: block; margin-bottom: 1rem; }
+  .l { display: block; font-weight: 500; margin-bottom: .3rem; color: var(--ivory); }
+  input, select, textarea { width: 100%; font: inherit; padding: .75rem .9rem; border: 1px solid var(--garis); border-radius: 0; background: var(--kartu); color: var(--tinta); color-scheme: dark; transition: border-color .25s; }
+  input::placeholder, textarea::placeholder { color: #75696a; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); }
+  input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: #ff8a80; }
+  .err { display: block; margin-top: .25rem; color: #ff8a80; font-size: .9rem; }
+  .bantu { display: block; margin-top: .25rem; color: var(--redup); font-size: .9rem; }
+  .kirim { width: 100%; min-height: 3.4rem; border: 0; background: var(--gold); color: var(--black); font: 500 .78rem var(--sans); letter-spacing: .22em; text-transform: uppercase; cursor: pointer; transition: background .3s, transform .3s var(--ease); }
+  .kirim:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .status { margin: .75rem 0 0; color: var(--daun); }
+  .ringkasan { border: 1px solid var(--garis); padding: 1.5rem; background: var(--kartu); }
+  .ringkasan h2 { margin-bottom: .75rem; color: var(--ivory); }
+  .ringkasan ul { list-style: none; margin: 0 0 1rem; padding: 0; }
+  .ringkasan :global(li) { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; border-bottom: 1px solid var(--garis); }
+  .ringkasan :global(small) { display: block; color: var(--redup); }
+  .baris { display: flex; justify-content: space-between; margin: .3rem 0; }
+  .total { font-weight: 600; font-size: 1.15rem; color: var(--gold-light); border-top: 1px solid var(--garis); padding-top: .6rem; margin-top: .6rem; }
+</style>

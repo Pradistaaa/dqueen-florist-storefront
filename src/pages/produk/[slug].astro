@@ -1,0 +1,137 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getKatalog, rupiah, satuan, type Product, type Variant } from '../../lib/katalog';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const { products } = await getKatalog();
+  return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+
+const { product } = Astro.props as { product: Product };
+const foto0 = product.variants[0]?.image_url ?? product.fotos[0];
+
+function info(v: Variant) {
+  return [
+    ['Proses', v.process_time],
+    ['Ketahanan', v.freshness],
+    ['Pemesanan', v.order_lead],
+    ['Warna', v.custom_color ? 'Bisa custom warna' : null],
+    ['Kartu ucapan', v.greeting_revisable === false ? 'Tidak bisa direvisi' : v.greeting_revisable ? 'Bisa direvisi' : null],
+    ['Isi', v.includes_doll ? 'Termasuk boneka' : null],
+  ].filter(([, isi]) => isi) as [string, string][];
+}
+---
+<Layout title={product.name} description={`${product.name} dari dQueen Florist.`}>
+  <nav class="remah"><a href="/katalog">Katalog</a>{product.category && <> / <a href={`/katalog#${product.category.slug}`}>{product.category.name}</a></>}</nav>
+
+  <div class="isi">
+    <div class="galeri">
+      {foto0 ? <img id="foto-utama" src={foto0} alt={product.name} /> : <div class="kosong"></div>}
+      {product.fotos.length > 1 && (
+        <div class="thumbs">
+          {product.fotos.map((f, i) => (
+            <button data-thumb={f} aria-label={`Foto ${i + 1}`}><img src={f} alt="" loading="lazy" /></button>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div class="info">
+      <h1>{product.name}</h1>
+
+      <h2 class="sub">Pilih varian</h2>
+      <div class="varian">
+        {product.variants.map((v, i) => (
+          <button data-varian={String(i)} data-foto={v.image_url ?? ''} data-id={v.id} data-harga={String(v.price)} data-unit={v.price_unit} data-nama={v.name} aria-pressed={String(i === 0)}>{v.name}</button>
+        ))}
+      </div>
+
+      {product.variants.map((v, i) => (
+        <section data-panel={String(i)} hidden={i !== 0}>
+          <p class="harga">{rupiah(v.price)}<small>{satuan[v.price_unit] ?? ''}</small></p>
+          <dl>
+            {info(v).map(([k, isi]) => <><dt>{k}</dt><dd>{isi}</dd></>)}
+          </dl>
+        </section>
+      ))}
+
+      <button id="tambah" class="pesan" data-produk={product.name} data-slug={product.slug}>Tambah ke keranjang</button>
+      <p id="pesan-keranjang" class="catatan" aria-live="polite"></p>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { tambah } from '../../lib/keranjang';
+
+  const tombol = document.querySelectorAll<HTMLButtonElement>('[data-varian]');
+  const panel = document.querySelectorAll<HTMLElement>('[data-panel]');
+  const utama = document.getElementById('foto-utama') as HTMLImageElement | null;
+  const tambahBtn = document.getElementById('tambah') as HTMLButtonElement;
+  const info = document.getElementById('pesan-keranjang')!;
+  let terpilih = '0';
+
+  const varianTerpilih = () => document.querySelector<HTMLButtonElement>(`[data-varian="${terpilih}"]`)!;
+
+  function pilih(i: string) {
+    terpilih = i;
+    tombol.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.varian === i)));
+    panel.forEach((p) => { p.hidden = p.dataset.panel !== i; });
+    const t = varianTerpilih();
+    if (t.dataset.foto && utama) utama.src = t.dataset.foto;
+    const bisa = t.dataset.unit === 'per_buket';
+    tambahBtn.disabled = !bisa;
+    info.textContent = bisa ? '' : 'Varian ini dihitung per tangkai dan belum bisa dimasukkan ke keranjang.';
+  }
+
+  tombol.forEach((t) => t.addEventListener('click', () => pilih(t.dataset.varian!)));
+  document.querySelectorAll<HTMLButtonElement>('[data-thumb]').forEach((t) =>
+    t.addEventListener('click', () => { if (utama) utama.src = t.dataset.thumb!; })
+  );
+
+  tambahBtn.addEventListener('click', () => {
+    const t = varianTerpilih();
+    tambah({
+      variantId: t.dataset.id!,
+      produk: tambahBtn.dataset.produk!,
+      varian: t.dataset.nama!,
+      harga: Number(t.dataset.harga),
+      foto: t.dataset.foto || utama?.src || '',
+      slug: tambahBtn.dataset.slug!,
+    });
+    info.innerHTML = 'Sudah masuk keranjang. <a href="/keranjang">Lihat keranjang</a>';
+  });
+
+  pilih('0');
+</script>
+
+<style>
+  .remah { margin: 1.5rem 0 1.5rem; color: var(--redup); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; }
+  .remah a { text-decoration: none; }
+  .remah a:hover { color: var(--gold-light); }
+  .isi { display: grid; gap: 2rem; }
+  @media (min-width: 800px) { .isi { grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: start; } .info { position: sticky; top: 6rem; } }
+  #foto-utama, .kosong { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; background: var(--lilac); display: block; border: 1px solid #ffffff14; }
+  .thumbs { display: flex; gap: .5rem; margin-top: .75rem; overflow-x: auto; padding-bottom: .25rem; }
+  .thumbs button { flex: 0 0 4rem; padding: 0; border: 1px solid var(--garis); background: none; cursor: pointer; transition: border-color .25s; }
+  .thumbs button:hover { border-color: var(--gold); }
+  .thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  h1 { color: var(--ivory); font-size: clamp(2.2rem, 4.5vw, 3.2rem); }
+  .sub { font: 600 .7rem var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin: 2rem 0 .8rem; }
+  .varian { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .varian button { font: inherit; font-size: .92rem; padding: .5rem 1.1rem; border: 1px solid var(--garis); border-radius: 999px; background: transparent; color: var(--ivory); cursor: pointer; transition: border-color .25s, background .25s, color .25s; }
+  .varian button:hover { border-color: var(--gold); }
+  .varian button[aria-pressed='true'] { background: var(--gold); border-color: var(--gold); color: var(--black); }
+  .harga { font: 500 2.2rem var(--serif); margin: 1.5rem 0 .6rem; color: var(--gold-light); }
+  .harga small { font: 400 1rem var(--sans); color: var(--redup); margin-left: .2rem; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: .5rem 1.5rem; margin: 0 0 2rem; padding: 1.2rem 0; border-top: 1px solid var(--garis); border-bottom: 1px solid var(--garis); }
+  dt { color: var(--redup); }
+  dd { margin: 0; color: var(--ivory); }
+  .pesan { font: 500 .78rem var(--sans); letter-spacing: .22em; text-transform: uppercase; width: 100%; min-height: 3.4rem; padding: 0 1rem; border: 0; background: var(--gold); color: var(--black); cursor: pointer; transition: background .3s, transform .3s var(--ease); }
+  .pesan:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-2px); }
+  .pesan:disabled { background: var(--garis); color: var(--redup); cursor: not-allowed; }
+  .catatan { color: var(--redup); font-size: .9rem; margin: .7rem 0 0; }
+  .catatan :global(a) { color: var(--gold-light); }
+</style>
