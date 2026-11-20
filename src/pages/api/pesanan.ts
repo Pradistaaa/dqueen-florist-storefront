@@ -168,6 +168,8 @@ const snapResponse = await fetch(
 
 const snap = await snapResponse.json();
 
+console.error('Midtrans response:', snapResponse.status, JSON.stringify(snap));
+
 if (!snapResponse.ok || !snap.token || !snap.redirect_url) {
   await db.from('orders')
     .update({ status: 'cancelled', payment_status: 'failed' })
