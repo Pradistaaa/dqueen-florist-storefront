@@ -186,7 +186,13 @@ const zona = await getZona();
     });
 
     const hasil = await response.json();
-    if (!response.ok) throw new Error(hasil.error || 'Pesanan gagal disimpan.');
+    if (!response.ok) {
+  const detail = Array.isArray(hasil.detail)
+    ? hasil.detail.join(', ')
+    : hasil.detail;
+
+  throw new Error([hasil.error, detail].filter(Boolean).join(' — '));
+}
 
     if (!hasil.redirectUrl) {
   throw new Error('Link pembayaran Midtrans belum tersedia.');
