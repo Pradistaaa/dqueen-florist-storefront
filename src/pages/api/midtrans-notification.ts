@@ -1,4 +1,3 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 
 export const prerender = false;
@@ -19,23 +18,26 @@ export async function POST({ request }: { request: Request }) {
       return json({ error: 'Konfigurasi server belum lengkap.' }, 500);
     }
 
-    const body = await request.json();
-    const orderNo = String(body.order_id ?? '');
-    const statusCode = String(body.status_code ?? '');
-    const grossAmount = String(body.gross_amount ?? '');
-    const signature = String(body.signature_key ?? '');
+    const notice = await request.json();
+    const orderNo = String(notice.order_id ?? '');
 
-    if (!orderNo || !statusCode || !grossAmount || !signature) {
-      return json({ error: 'Data notifikasi tidak lengkap.' }, 400);
-    }
+    if (!orderNo) return json({ error: 'Nomor pesanan tidak ada.' }, 400);
 
-    const expected = createHash('sha512')
-      .update(orderNo + statusCode + grossAmount + serverKey)
-      .digest();
+    const statusResponse = await fetch(
+      `https://api.sandbox.midtrans.com/v2/${encodeURIComponent(orderNo)}/status`,
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${serverKey}:`).toString('base64')}`,
+          Accept: 'application/json',
+        },
+      }
+    );
 
-    const received = Buffer.from(signature, 'hex');
-    if (received.length !== expected.length || !timingSafeEqual(received, expected)) {
-      return json({ error: 'Tanda tangan notifikasi tidak valid.' }, 401);
+    const transaction = await statusResponse.json();
+
+    if (!statusResponse.ok) {
+      console.error('Midtrans status check failed:', statusResponse.status, transaction);
+      return json({ error: 'Midtrans gagal memverifikasi status transaksi.' }, 502);
     }
 
     const db = createClient(supabaseUrl, serviceRoleKey, {
@@ -44,16 +46,18 @@ export async function POST({ request }: { request: Request }) {
 
     const { data: order, error: findError } = await db
       .from('orders')
-      .select('id,payment_status,status')
+      .select('id')
       .eq('order_no', orderNo)
       .maybeSingle();
 
     if (findError) return json({ error: 'Gagal mencari pesanan.' }, 500);
     if (!order) return json({ error: 'Pesanan tidak ditemukan.' }, 404);
 
-    const transactionStatus = String(body.transaction_status ?? '');
-    const fraudStatus = String(body.fraud_status ?? '');
-    const paymentType = body.payment_type ? String(body.payment_type) : null;
+    const transactionStatus = String(transaction.transaction_status ?? '');
+    const fraudStatus = String(transaction.fraud_status ?? '');
+    const paymentType = transaction.payment_type
+      ? String(transaction.payment_type)
+      : null;
 
     let updates: Record<string, unknown> = { payment_type: paymentType };
 
@@ -71,8 +75,6 @@ export async function POST({ request }: { request: Request }) {
       updates = { ...updates, payment_status: 'expired', status: 'expired' };
     } else if (transactionStatus === 'deny' || transactionStatus === 'cancel') {
       updates = { ...updates, payment_status: 'failed', status: 'cancelled' };
-    } else if (transactionStatus === 'pending') {
-      updates = { ...updates, payment_status: 'unpaid', status: 'pending' };
     } else {
       return json({ received: true });
     }
@@ -82,10 +84,17 @@ export async function POST({ request }: { request: Request }) {
       .update(updates)
       .eq('id', order.id);
 
-    if (updateError) return json({ error: 'Gagal memperbarui pesanan.' }, 500);
+    if (updateError) {
+      console.error('Order payment update failed:', updateError.message);
+      return json({ error: 'Gagal memperbarui pesanan.' }, 500);
+    }
 
     return json({ received: true });
-  } catch {
+  } catch (error) {
+    console.error(
+      'Midtrans notification handler failed:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return json({ error: 'Notifikasi Midtrans gagal diproses.' }, 500);
   }
 }
