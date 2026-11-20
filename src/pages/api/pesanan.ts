@@ -173,7 +173,10 @@ if (!snapResponse.ok || !snap.token || !snap.redirect_url) {
     .update({ status: 'cancelled', payment_status: 'failed' })
     .eq('id', order.id);
 
-  return json({ error: 'Midtrans belum berhasil membuat pembayaran.' }, 502);
+  return json({
+  error: 'Midtrans belum berhasil membuat pembayaran.',
+  detail: snap.error_messages ?? snap.message ?? 'Tidak ada detail dari Midtrans.',
+}, 502);
 }
 
 await db.from('orders')
