@@ -1,0 +1,145 @@
+---
+import Layout from '../layouts/Layout.astro';
+export const prerender = true;
+---
+
+<Layout title="Lacak Pesanan">
+  <section class="lacak">
+    <h1>Lacak Pesanan</h1>
+    <p>Masukkan nomor pesanan dan nomor HP pemesan untuk melihat status terbaru.</p>
+
+    <form id="form-lacak">
+      <label>
+        Nomor pesanan
+        <input name="orderNo" required placeholder="Contoh: ORD-261120-00001" />
+      </label>
+
+      <label>
+        Nomor HP pemesan
+        <input name="phone" type="tel" required placeholder="Nomor saat checkout" />
+      </label>
+
+      <button type="submit">Cek Status</button>
+    </form>
+
+    <p id="pesan" role="status" hidden></p>
+
+    <section id="hasil" hidden aria-live="polite">
+      <h2 id="nomor"></h2>
+      <p>Status: <strong id="status"></strong></p>
+      <p>Pembayaran: <strong id="pembayaran"></strong></p>
+      <p>Tanggal kirim: <strong id="tanggal"></strong></p>
+      <p id="baris-resi" hidden>
+        Resi: <strong id="kurir"></strong>
+        <span id="nomor-resi"></span>
+        <a id="tautan-resi" target="_blank" rel="noopener noreferrer" hidden>
+          Lacak di situs kurir
+        </a>
+      </p>
+      <small id="diperbarui"></small>
+    </section>
+  </section>
+</Layout>
+
+<script>
+  const form = document.getElementById('form-lacak') as HTMLFormElement;
+  const pesan = document.getElementById('pesan')!;
+  const hasil = document.getElementById('hasil')!;
+  let orderNo = '';
+  let phone = '';
+  let timer: number | undefined;
+
+  const statusNama: Record<string, string> = {
+    pending: 'Menunggu konfirmasi',
+    paid: 'Pembayaran diterima',
+    processing: 'Sedang dirangkai',
+    delivering: 'Dalam pengiriman',
+    completed: 'Terkirim',
+    cancelled: 'Dibatalkan',
+    expired: 'Kedaluwarsa',
+  };
+
+  const bayarNama: Record<string, string> = {
+    unpaid: 'Belum dibayar',
+    paid: 'Lunas',
+    failed: 'Pembayaran gagal',
+    expired: 'Kedaluwarsa',
+    refunded: 'Dikembalikan',
+  };
+
+  async function cekStatus() {
+    const response = await fetch('/api/lacak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderNo, phone }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || 'Pesanan tidak ditemukan.');
+
+    document.getElementById('nomor')!.textContent = `Pesanan ${data.orderNo}`;
+    document.getElementById('status')!.textContent =
+      statusNama[data.status] || data.status;
+    document.getElementById('pembayaran')!.textContent =
+      bayarNama[data.paymentStatus] || data.paymentStatus;
+    document.getElementById('tanggal')!.textContent = data.deliveryDate || '-';
+
+    const adaResi = Boolean(data.trackingNumber);
+    document.getElementById('baris-resi')!.hidden = !adaResi;
+    document.getElementById('kurir')!.textContent = data.carrier || '';
+    document.getElementById('nomor-resi')!.textContent =
+      data.trackingNumber || '';
+
+    const link = document.getElementById('tautan-resi') as HTMLAnchorElement;
+    try {
+      const url = new URL(data.trackingUrl);
+      const aman = url.protocol === 'https:' || url.protocol === 'http:';
+      link.hidden = !adaResi || !aman;
+      if (aman) link.href = url.href;
+    } catch {
+      link.hidden = true;
+    }
+
+    document.getElementById('diperbarui')!.textContent =
+      data.updatedAt
+        ? `Pembaruan terakhir: ${new Date(data.updatedAt).toLocaleString('id-ID')}`
+        : '';
+
+    hasil.hidden = false;
+    pesan.hidden = true;
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    orderNo = String(data.get('orderNo') || '').trim();
+    phone = String(data.get('phone') || '').trim();
+
+    if (timer) window.clearInterval(timer);
+    pesan.textContent = 'Memeriksa pesanan…';
+    pesan.hidden = false;
+    hasil.hidden = true;
+
+    try {
+      await cekStatus();
+      timer = window.setInterval(() => {
+        cekStatus().catch(() => {});
+      }, 30000);
+    } catch (error) {
+      pesan.textContent =
+        error instanceof Error ? error.message : 'Gagal memeriksa pesanan.';
+    }
+  });
+</script>
+
+<style>
+  .lacak { max-width: 38rem; margin: 3rem auto; }
+  h1, h2 { color: var(--ivory); }
+  form { display: grid; gap: 1rem; margin: 2rem 0; }
+  label { display: grid; gap: .4rem; color: var(--ivory); }
+  input { width: 100%; padding: .8rem; border: 1px solid var(--garis); background: var(--kartu); color: var(--tinta); font: inherit; }
+  button { min-height: 3.2rem; border: 0; background: var(--gold); color: var(--black); font: inherit; cursor: pointer; }
+  #hasil { margin-top: 2rem; padding: 1.5rem; border: 1px solid var(--garis); background: var(--kartu); }
+  #hasil p { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--garis); padding: .5rem 0; }
+  #hasil a { color: var(--gold-light); }
+</style>

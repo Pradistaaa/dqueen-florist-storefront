@@ -1,6 +1,6 @@
 ---
 interface Props { title?: string; description?: string; wide?: boolean }
-const { title, description = 'Buket bunga dirangkai sesuai pesanan.', wide = false } = Astro.props;
+const { title, description = 'Buket bunga mewah dirangkai sesuai pesanan.', wide = false } = Astro.props;
 const judul = title ? `${title} | dQueen Florist` : 'dQueen Florist';
 const tahun = new Date().getFullYear();
 ---
@@ -10,49 +10,63 @@ const tahun = new Date().getFullYear();
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#0a0708" />
     <title>{judul}</title>
     <script is:inline>document.documentElement.classList.add('js');</script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div class="pengumuman">
-      <p>Buket dirangkai sesuai pesanan <span aria-hidden="true">✦</span> Order mudah lewat WhatsApp</p>
+      <p>Buket dirangkai sesuai pesanan <span aria-hidden="true">✦</span> Pesan mudah lewat WhatsApp</p>
     </div>
 
     <header class="atas">
       <div class="atas-isi">
-        <div class="sisi sisi-kiri">
-          <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-utama" aria-label="Buka menu">
-            <span></span><span></span>
-          </button>
-          <nav class="menu-d" aria-label="Navigasi utama">
-            <a href="/katalog">Koleksi</a>
-            <a href="/#bestseller">Bestseller</a>
-            <a href="/#seasonal">Seasonal</a>
-          </nav>
-        </div>
+        <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-mobile" aria-label="Buka menu">
+          <span></span><span></span>
+        </button>
+
+        <nav class="menu menu-kiri" aria-label="Navigasi utama">
+          <a href="/katalog">Koleksi</a>
+          <a href="/#bestseller">Terlaris</a>
+          <a href="/#seasonal">Seasonal</a>
+        </nav>
 
         <a class="merek" href="/">dQueen <em>Florist</em></a>
 
-        <div class="sisi sisi-kanan">
-          <nav class="menu-d" aria-label="Navigasi tambahan">
+        <div class="kanan">
+          <nav class="menu menu-kanan" aria-label="Navigasi tambahan">
             <a href="/#cerita">Cerita Kami</a>
             <a href="/#galeri">Galeri</a>
           </nav>
-          <a href="/keranjang" class="ke-keranjang">Keranjang <span id="jml-keranjang" hidden></span></a>
+          <a href="/keranjang" class="ke-keranjang">
+  <span>Keranjang</span>
+
+  <svg
+    class="ikon-keranjang"
+    viewBox="0 0 28 28"
+    role="img"
+    aria-label="Lihat keranjang belanja"
+  >
+    <path d="M3 4h3l2.4 13.1a2 2 0 0 0 2 1.6h10.1a2 2 0 0 0 1.9-1.5L25 9H7" />
+    <circle cx="11" cy="23" r="1.6" />
+    <circle cx="21" cy="23" r="1.6" />
+  </svg>
+
+  <span id="jml-keranjang" hidden></span>
+</a>
         </div>
       </div>
 
-      <nav id="menu-utama" class="menu-m" aria-label="Navigasi mobile">
+      <nav id="menu-mobile" class="menu-mobile" aria-label="Menu seluler">
         <a href="/">Beranda</a>
         <a href="/katalog">Koleksi</a>
-        <a href="/#bestseller">Bestseller</a>
+        <a href="/#bestseller">Terlaris</a>
         <a href="/#seasonal">Seasonal</a>
         <a href="/#cerita">Cerita Kami</a>
         <a href="/#galeri">Galeri</a>
+        <a href="/lacak-pesanan">Lacak Pesanan</a>
       </nav>
     </header>
 
@@ -62,14 +76,15 @@ const tahun = new Date().getFullYear();
       <div class="bawah-isi">
         <div class="bawah-merek">
           <a class="merek" href="/">dQueen <em>Florist</em></a>
-          <p>Rangkaian bunga yang dibuat dengan penuh perhatian, untuk momen yang pantas dikenang lebih lama.</p>
+          <p>Seni merangkai bunga untuk setiap perasaan. Dibuat dengan penuh perhatian, untuk momen yang pantas dikenang lebih lama.</p>
         </div>
         <div>
           <h4>Belanja</h4>
           <a href="/katalog">Semua Koleksi</a>
-          <a href="/#bestseller">Bestseller</a>
+          <a href="/#bestseller">Buket Terlaris</a>
           <a href="/#seasonal">Seasonal</a>
           <a href="/keranjang">Keranjang</a>
+          <a href="/lacak-pesanan">Lacak Pesanan</a>
         </div>
         <div>
           <h4>Tentang</h4>
@@ -78,14 +93,14 @@ const tahun = new Date().getFullYear();
           <a href="/#testimoni">Testimoni</a>
         </div>
         <div>
-          <h4>Pesan</h4>
+          <h4>Cara Pesan</h4>
           <p>Pilih rangkaian di katalog, masukkan ke keranjang, lalu selesaikan pesanan lewat WhatsApp.</p>
           <a href="/katalog" class="bawah-cta">Mulai belanja ↗</a>
         </div>
       </div>
       <div class="bawah-garis">
-        <span>© {tahun} dQueen Florist. All rights reserved.</span>
-        <span>Made with love</span>
+        <span>© {tahun} dQueen Florist. Hak cipta dilindungi.</span>
+        <span>Dibuat dengan cinta</span>
       </div>
     </footer>
   </body>
@@ -104,7 +119,7 @@ const tahun = new Date().getFullYear();
 
   // Menu mobile
   const btn = document.getElementById('menu-btn');
-  const menu = document.getElementById('menu-utama');
+  const menu = document.getElementById('menu-mobile');
   btn?.addEventListener('click', () => {
     const buka = menu?.classList.toggle('buka') ?? false;
     btn.setAttribute('aria-expanded', String(buka));
@@ -131,85 +146,98 @@ const tahun = new Date().getFullYear();
 </script>
 
 <style is:global>
+
+  .ikon-keranjang {
+  width: 1.8rem;
+  height: 1.8rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
+.ke-keranjang {
+  gap: 0.6rem;
+}
+
   :root {
-    color-scheme: dark;
-    /* Palet utama */
-    --black: #0a0708; --panel: #150c10; --kartu: #1b1015;
-    --ivory: #f1e8dc; --charcoal: #221b1b;
+    /* Token lama dipertahankan (dipakai halaman katalog/keranjang), nilainya diubah ke tema gelap */
+    --kertas: #0f0b0c; --tinta: #f1e8dc; --mawar: #9b2447; --lilac: #1b1416;
+    --daun: #7ea58a; --garis: #34272b; --redup: #a99d90;
+    --serif: 'Cormorant Garamond', Georgia, serif; --sans: 'Jost', system-ui, sans-serif;
+    /* Token baru */
+    --black: #0a0708; --panel: #150f11; --ivory: #f1e8dc;
     --burgundy: #4a1424; --burgundy-2: #7a2540;
     --gold: #c8a96a; --gold-light: #e6d3a3;
     --ease: cubic-bezier(.2,.7,.2,1);
-
-    /* Token lama (dipakai katalog, produk, keranjang, checkout), kini versi gelap */
-    --kertas: #0d0809; --tinta: #f1e8dc; --mawar: #e6d3a3; --lilac: #24151b;
-    --daun: #8fc2a0; --garis: #3a2a30; --redup: #a99d90;
-    --serif: 'Cormorant Garamond', Georgia, serif; --sans: 'Figtree', system-ui, sans-serif;
   }
   *, *::before, *::after { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
-  body { margin: 0; background: var(--kertas); color: var(--tinta); font: 400 1rem/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--kertas); color: var(--tinta); font: 300 1rem/1.7 var(--sans); -webkit-font-smoothing: antialiased; }
   a { color: inherit; }
   img { max-width: 100%; }
   h1, h2, h3 { font-family: var(--serif); font-weight: 500; line-height: 1.1; margin: 0; }
   h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); }
   h2 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); }
-  main { max-width: 72rem; margin: 0 auto; padding: 0 1.25rem 5rem; }
+  main { max-width: 72rem; margin: 0 auto; padding: 0 1.25rem 4rem; }
   main.lebar { max-width: none; padding: 0; }
   :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-  ::selection { background: var(--burgundy-2); color: #fff; }
 
   /* Announcement bar */
-  .pengumuman { background: var(--burgundy); color: var(--gold-light); text-align: center; padding: .55rem 1rem; font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; }
+  .pengumuman { background: var(--burgundy); color: var(--gold-light); text-align: center; padding: .55rem 1rem; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; }
   .pengumuman p { margin: 0; }
   .pengumuman span { margin: 0 .6rem; color: var(--gold); }
 
-  /* Header: logo di tengah, menu kiri dan kanan */
-  .atas { position: sticky; top: 0; z-index: 50; background: #0a0708e6; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid #c8a96a33; }
-  .atas-isi { max-width: 84rem; margin: 0 auto; padding: 1rem 2rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; }
-  .sisi { display: flex; align-items: center; gap: 2.2rem; }
-  .sisi-kanan { justify-content: flex-end; }
-  .merek { font: 500 1.75rem/1 var(--serif); text-decoration: none; color: var(--ivory); letter-spacing: .01em; white-space: nowrap; }
+  /* Header: logo di tengah */
+  .atas { position: sticky; top: 0; z-index: 50; background: rgba(13,10,11,.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid #ffffff14; }
+  .atas-isi { max-width: 84rem; margin: 0 auto; padding: 1.1rem 2rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; }
+  .merek { font: 500 1.8rem/1 var(--serif); text-decoration: none; color: var(--ivory); letter-spacing: .01em; text-align: center; }
   .merek em { font-style: italic; color: var(--gold); }
-  .menu-d { display: flex; gap: 2rem; }
-  .menu-d a, .menu-m a { text-decoration: none; font-size: .7rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--ivory); position: relative; padding: .3rem 0; }
-  .menu-d a::after { content: ''; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
-  .menu-d a:hover::after { transform: scaleX(1); }
-  .ke-keranjang { text-decoration: none; font-size: .7rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--gold-light); display: inline-flex; align-items: center; gap: .5rem; }
-  #jml-keranjang { display: inline-block; min-width: 1.35rem; padding: 0 .4rem; border-radius: 999px; background: var(--gold); color: var(--black); font-size: .72rem; line-height: 1.35rem; text-align: center; letter-spacing: 0; }
+  .menu { display: flex; gap: 2rem; }
+  .menu-kiri { justify-self: start; }
+  .kanan { justify-self: end; display: flex; align-items: center; gap: 2rem; }
+  .menu a, .ke-keranjang { text-decoration: none; font-size: .7rem; font-weight: 400; letter-spacing: .2em; text-transform: uppercase; position: relative; padding: .3rem 0; color: var(--ivory); }
+  .menu a::after { content: ''; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
+  .menu a:hover::after { transform: scaleX(1); }
+  .ke-keranjang { display: inline-flex; align-items: center; gap: .55rem; color: var(--gold-light); }
+  #jml-keranjang { display: inline-block; min-width: 1.35rem; padding: 0 .4rem; border-radius: 999px; background: var(--gold); color: var(--black); font-size: .7rem; font-weight: 500; line-height: 1.35rem; text-align: center; letter-spacing: 0; }
   .menu-btn { display: none; width: 2.4rem; height: 2.4rem; background: none; border: 0; padding: 0; cursor: pointer; flex-direction: column; justify-content: center; gap: 6px; }
-  .menu-btn span { display: block; height: 1px; background: var(--gold-light); width: 1.5rem; }
-  .menu-m { display: none; }
+  .menu-btn span { display: block; height: 1px; background: var(--ivory); width: 1.5rem; }
+  .menu-mobile { display: none; }
 
-  @media (max-width: 860px) {
-    .atas-isi { padding: .8rem 1.1rem; gap: .5rem; }
-    .merek { font-size: 1.5rem; }
-    .menu-d { display: none; }
+  @media (max-width: 960px) {
     .menu-btn { display: flex; }
-    .menu-m { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; background: var(--black); border-bottom: 1px solid #c8a96a33; padding: .5rem 1.1rem 1rem; }
-    .menu-m.buka { display: flex; }
-    .menu-m a { padding: 1rem 0; border-bottom: 1px solid #ffffff14; font-size: .78rem; }
+    .menu-kiri, .menu-kanan { display: none; }
+    .atas-isi { grid-template-columns: auto 1fr auto; padding: .85rem 1.1rem; }
+    .merek { font-size: 1.55rem; }
+    .kanan { gap: 0; }
+    .menu-mobile { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; background: var(--black); border-bottom: 1px solid #ffffff14; padding: .5rem 1.25rem 1rem; }
+    .menu-mobile.buka { display: flex; }
+    .menu-mobile a { text-decoration: none; padding: .95rem 0; border-bottom: 1px solid #ffffff12; font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; }
   }
 
   /* Footer */
-  .bawah { background: var(--charcoal); color: #cfc4b6; border-top: 1px solid #c8a96a33; }
+  .bawah { background: var(--black); color: #cfc4b6; border-top: 1px solid #c8a96a55; }
   .bawah-isi { max-width: 84rem; margin: 0 auto; padding: 4.5rem 2rem 3rem; display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.3fr; gap: 3rem; }
-  .bawah .merek { color: var(--ivory); font-size: 2rem; }
-  .bawah-merek p { max-width: 20rem; font-size: .9rem; line-height: 1.8; margin: 1.2rem 0 0; color: #a99d90; }
-  .bawah h4 { margin: 0 0 1.2rem; font: 600 .7rem var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--gold); }
-  .bawah-isi > div > a { display: block; text-decoration: none; font-size: .92rem; padding: .3rem 0; color: #cfc4b6; transition: color .25s, transform .25s; }
+  .bawah .merek { color: var(--ivory); font-size: 2rem; text-align: left; display: inline-block; }
+  .bawah-merek p { max-width: 20rem; font-size: .92rem; line-height: 1.9; margin: 1.2rem 0 0; color: #a99d90; }
+  .bawah h4 { margin: 0 0 1.2rem; font: 500 .7rem var(--sans); letter-spacing: .24em; text-transform: uppercase; color: var(--gold); }
+  .bawah-isi > div > a { display: block; text-decoration: none; font-size: .95rem; padding: .3rem 0; color: #cfc4b6; transition: color .25s, transform .25s; }
   .bawah-isi > div > a:hover { color: var(--gold-light); transform: translateX(3px); }
-  .bawah-isi > div > p { font-size: .9rem; line-height: 1.8; margin: 0 0 1rem; color: #a99d90; }
-  .bawah .bawah-cta { color: var(--gold-light); font-weight: 600; letter-spacing: .08em; }
-  .bawah-garis { max-width: 84rem; margin: 0 auto; padding: 1.4rem 2rem 2rem; border-top: 1px solid #ffffff1f; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: .75rem; letter-spacing: .08em; color: #8c8175; }
+  .bawah-isi > div > p { font-size: .92rem; line-height: 1.9; margin: 0 0 1rem; color: #a99d90; }
+  .bawah .bawah-cta { color: var(--gold-light); font-weight: 500; letter-spacing: .08em; }
+  .bawah-garis { max-width: 84rem; margin: 0 auto; padding: 1.4rem 2rem 2rem; border-top: 1px solid #ffffff1a; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: .75rem; letter-spacing: .08em; color: #8c8175; }
   @media (max-width: 860px) {
-    .bawah-isi { grid-template-columns: 1fr 1fr; gap: 2.5rem 1.5rem; padding: 3.5rem 1.25rem 2rem; }
+    .bawah-isi { grid-template-columns: 1fr 1fr; gap: 2.5rem 1.5rem; padding: 3.5rem 1.25rem 2.5rem; }
     .bawah-merek { grid-column: 1 / -1; }
     .bawah-garis { padding: 1.4rem 1.25rem 2rem; }
   }
 
-  /* Grid katalog (dipakai halaman katalog) */
-  .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 2rem 1.25rem; grid-template-columns: repeat(2, 1fr); }
+  /* Class lama untuk halaman lain */
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.75rem 1.25rem; grid-template-columns: repeat(2, 1fr); }
   @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
   @media (min-width: 1000px) { .grid { grid-template-columns: repeat(4, 1fr); } }
 

@@ -78,7 +78,7 @@ const zona = await getZona();
 </Layout>
 
 <script>
-  import { ambil, subtotal, rupiah } from '../lib/keranjang';
+  import { ambil, subtotal, rupiah, kosongkan } from '../lib/keranjang';
 
   const kolom = ['pemesan_nama', 'pemesan_wa', 'penerima_nama', 'penerima_hp', 'alamat', 'zona', 'tanggal', 'jam', 'ucapan', 'catatan', 'kupon'];
   const DRAFT = 'dq-checkout';
@@ -135,26 +135,76 @@ const zona = await getZona();
     return e;
   }
 
-  form.addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const e = cek();
-    for (const k of kolom) {
-      const box = document.getElementById('err-' + k);
-      if (!box) continue;
-      box.textContent = e[k] ?? '';
-      box.hidden = !e[k];
-      el(k).setAttribute('aria-invalid', String(Boolean(e[k])));
-    }
-    const status = document.getElementById('status')!;
-    const pertama = kolom.find((k) => e[k]);
-    if (pertama) {
-      status.hidden = true;
-      el(pertama).focus();
-      return;
-    }
-    status.textContent = 'Data sudah lengkap. Pesanan belum dikirim ke server, itu dikerjakan di langkah berikutnya.';
+  form.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+
+  const e = cek();
+  for (const k of kolom) {
+    const box = document.getElementById('err-' + k);
+    if (!box) continue;
+    box.textContent = e[k] ?? '';
+    box.hidden = !e[k];
+    el(k).setAttribute('aria-invalid', String(Boolean(e[k])));
+  }
+
+  const status = document.getElementById('status')!;
+  const pertama = kolom.find((k) => e[k]);
+  if (pertama) {
+    status.hidden = true;
+    el(pertama).focus();
+    return;
+  }
+
+  const tombol = form.querySelector<HTMLButtonElement>('.kirim')!;
+  tombol.disabled = true;
+  tombol.textContent = 'Menyimpan pesanan…';
+  status.hidden = true;
+
+  try {
+    const response = await fetch('/api/pesanan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name: val('pemesan_nama'),
+        customer_phone: val('pemesan_wa'),
+        recipient_name: val('penerima_nama'),
+        recipient_phone: val('penerima_hp'),
+        recipient_address: val('alamat'),
+        delivery_zone_id: val('zona'),
+        delivery_date: val('tanggal'),
+        delivery_slot: val('jam'),
+        card_message: val('ucapan'),
+        notes: val('catatan'),
+        items: items.map((item) => ({
+          variantId: item.variantId,
+          qty: item.qty,
+        })),
+        productNames: Object.fromEntries(
+          items.map((item) => [item.variantId, item.produk])
+        ),
+      }),
+    });
+
+    const hasil = await response.json();
+    if (!response.ok) throw new Error(hasil.error || 'Pesanan gagal disimpan.');
+
+    if (!hasil.redirectUrl) {
+  throw new Error('Link pembayaran Midtrans belum tersedia.');
+}
+
+kosongkan();
+localStorage.removeItem(DRAFT);
+window.location.assign(hasil.redirectUrl);
+return;
+
+  } catch (err) {
+    status.textContent =
+      err instanceof Error ? err.message : 'Pesanan gagal disimpan. Coba lagi.';
     status.hidden = false;
-  });
+    tombol.disabled = false;
+    tombol.textContent = 'Buat pesanan';
+  }
+});
 
   ringkasan();
 </script>

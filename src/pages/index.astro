@@ -12,10 +12,6 @@ const semuaFoto: string[] = [...new Set(products.flatMap((p) => p.fotos ?? []))]
 // Foto hero: file ada di public/hero/. Ganti nama file di sini kalau mau foto lain.
 const heroFoto = '/hero/hero.jpg';
 const heroFotoHP = '/hero/hero-mobile.jpg';
-const kartuProduct = products.find((p) => p.fotos?.[0]);
-const editorialFoto = semuaFoto[2] ?? semuaFoto[0];
-const editorialFoto2 = semuaFoto[3] ?? semuaFoto[1] ?? semuaFoto[0];
-const galeri = semuaFoto.slice(0, 6);
 
 // ---- Koleksi (kategori) dengan foto ----
 const koleksi = categories.slice(0, 4).map((c) => ({
@@ -27,18 +23,14 @@ const koleksi = categories.slice(0, 4).map((c) => ({
 // ---- Produk ----
 // Isi slug produk andalan lo (lihat kolom slug di Supabase). Kosong = pakai 8 produk pertama.
 const bestsellerSlug: string[] = [];
-const seasonalSlug: string[] = []; // isi 3 slug untuk koleksi musiman. Kosong = otomatis.
 
 const ambilSlug = (slugs: string[], cadangan: Product[]) => {
   const hasil = slugs.map((s) => products.find((p) => p.slug === s)).filter(Boolean) as Product[];
   return hasil.length ? hasil : cadangan;
 };
 const bestseller = ambilSlug(bestsellerSlug, products.slice(0, 8));
-const seasonal = ambilSlug(seasonalSlug, products.slice(8, 11).length >= 3 ? products.slice(8, 11) : products.slice(0, 3));
 
 // ---- Seasonal: ganti teks ini tiap musim ----
-const seasonalJudul = 'Hari Ibu & Natal';
-const seasonalDeskripsi = 'Rangkaian pilihan untuk momen penuh kasih di penghujung tahun.';
 
 // ---- Testimoni: isi dengan testimoni ASLI pelanggan. Kosong = section otomatis disembunyikan. ----
 // Contoh format: { nama: 'Nama Pelanggan', momen: 'Hari Ibu', teks: 'Isi testimoni asli...' }
@@ -63,16 +55,6 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [];
       <p class="reveal" style="--d:.2s">Pilih buket dan rangkaian bunga untuk ulang tahun, anniversary, ucapan, dan momen spesial lainnya. Dirangkai sesuai pesanan dan dikirim ke wilayah Jakarta dan seluruh Indonesia.</p>
       <a class="btn-pill reveal" style="--d:.3s" href="/katalog">Lihat Koleksi</a>
     </div>
-
-    {kartuProduct && (
-      <a class="hero-card reveal" style="--d:.45s" href={`/produk/${kartuProduct.slug}`}>
-        <div class="hero-card-img">
-          {kartuProduct.fotos?.[0] ? <img src={kartuProduct.fotos[0]} alt={kartuProduct.name} /> : <div class="ph"></div>}
-        </div>
-        <span class="hero-card-name">{kartuProduct.name}</span>
-        <span class="hero-card-cta">Beli sekarang <b>›</b></span>
-      </a>
-    )}
   </section>
 
   <!-- 4. KOLEKSI PILIHAN (asimetris, gaya editorial) -->
@@ -116,75 +98,6 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [];
       </ul>
     </div>
   </section>
-
-  <!-- 6. EDITORIAL: KEINDAHAN & PROSES -->
-  <section class="edit wrap" id="cerita">
-    <div class="edit-img reveal">
-      {editorialFoto ? <img src={editorialFoto} alt="Proses merangkai bunga" loading="lazy" /> : <div class="ph"></div>}
-      {editorialFoto2 && <img class="edit-img2" src={editorialFoto2} alt="Detail rangkaian" loading="lazy" />}
-    </div>
-    <div class="edit-copy">
-      <span class="eyebrow reveal"><i></i>Cerita & keahlian kami</span>
-      <h2 class="reveal judul" style="--d:.1s">Setiap detail<br />punya <em>makna.</em></h2>
-      <p class="reveal" style="--d:.15s">
-        Kami percaya setiap bunga punya bahasa. Dari pemilihan bunga hingga sentuhan akhir,
-        setiap rangkaian dibuat satu per satu agar hadiah yang kamu berikan terasa lebih personal.
-      </p>
-      <ol class="steps">
-        <li class="reveal" style="--d:.2s"><b>01</b><div><h3>Dipilih dengan teliti</h3><p>Bunga dipilih sesuai karakter dan pesan dari setiap rangkaian.</p></div></li>
-        <li class="reveal" style="--d:.28s"><b>02</b><div><h3>Dirangkai dengan tangan</h3><p>Komposisi warna dan bentuk disusun rapi, satu buket satu cerita.</p></div></li>
-        <li class="reveal" style="--d:.36s"><b>03</b><div><h3>Finishing yang berkelas</h3><p>Sentuhan akhir yang membuat buket siap diberikan di momen spesial.</p></div></li>
-      </ol>
-      <a class="btn-pill reveal" style="--d:.4s" href="/katalog">Temukan buketmu</a>
-    </div>
-  </section>
-
-  <!-- 7. SEASONAL -->
-  <section class="season" id="seasonal">
-    <div class="wrap season-in">
-      <div class="season-main reveal">
-        <div class="season-img">
-          {seasonal[0]?.fotos?.[0] ? <img src={seasonal[0].fotos[0]} alt={seasonal[0].name} loading="lazy" /> : <div class="ph"></div>}
-        </div>
-      </div>
-      <div class="season-copy">
-        <span class="eyebrow reveal"><i></i>Koleksi musiman</span>
-        <h2 class="reveal judul" style="--d:.1s">{seasonalJudul}</h2>
-        <p class="reveal" style="--d:.15s">{seasonalDeskripsi}</p>
-        <a class="btn-gold reveal" style="--d:.2s" href="/katalog">Lihat koleksi</a>
-        <div class="season-mini">
-          {seasonal.slice(1, 3).map((p, i) => (
-            <a class="mini reveal" style={`--d:${0.25 + i * 0.1}s`} href={`/produk/${p.slug}`}>
-              <div class="mini-img">
-                {p.fotos?.[0] ? <img src={p.fotos[0]} alt={p.name} loading="lazy" /> : <div class="ph"></div>}
-              </div>
-              <span>{p.name}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 8. GALERI / INSPIRASI -->
-  {galeri.length > 0 && (
-    <section class="sec wrap" id="galeri">
-      <div class="head reveal">
-        <div>
-          <span class="eyebrow"><i></i>Inspirasi</span>
-          <h2 class="judul">Momen yang <em>mekar.</em></h2>
-        </div>
-        <a class="tlink" href="/katalog">Lihat semua ↗</a>
-      </div>
-      <div class="gal">
-        {galeri.map((f, i) => (
-          <a class={`gal-item gal-${i + 1} reveal`} style={`--d:${(i % 3) * 0.08}s`} href="/katalog">
-            <img src={f} alt="Inspirasi rangkaian dQueen Florist" loading="lazy" />
-          </a>
-        ))}
-      </div>
-    </section>
-  )}
 
   <!-- 9. TESTIMONI -->
   {testimoni.length > 0 && (
