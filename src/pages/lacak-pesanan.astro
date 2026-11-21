@@ -8,19 +8,30 @@ export const prerender = true;
     <h1>Lacak Pesanan</h1>
     <p>Masukkan nomor pesanan dan nomor HP pemesan untuk melihat status terbaru.</p>
 
-    <form id="form-lacak">
-      <label>
-        Nomor pesanan
-        <input name="orderNo" required placeholder="Contoh: ORD-261120-00001" />
-      </label>
+    <form id="form-lacak" autocomplete="off">
+  <label>
+    Nomor pesanan
+    <input
+      name="orderNo"
+      required
+      autocomplete="off"
+      placeholder="Contoh: ORD-261120-00001"
+    />
+  </label>
 
-      <label>
-        Nomor HP pemesan
-        <input name="phone" type="tel" required placeholder="Nomor saat checkout" />
-      </label>
+  <label>
+    Nomor HP pemesan
+    <input
+      name="phone"
+      type="tel"
+      required
+      autocomplete="off"
+      placeholder="Nomor saat checkout"
+    />
+  </label>
 
-      <button type="submit">Cek Status</button>
-    </form>
+  <button type="submit">Cek Status</button>
+</form>
 
     <p id="pesan" role="status" hidden></p>
 
@@ -122,6 +133,7 @@ export const prerender = true;
 
     try {
       await cekStatus();
+      form.reset();
       timer = window.setInterval(() => {
         cekStatus().catch(() => {});
       }, 30000);
