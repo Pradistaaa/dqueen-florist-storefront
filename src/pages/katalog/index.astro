@@ -13,6 +13,16 @@ const { products, categories } = await getKatalog();
     <p>Pilih rangkaian favoritmu, tiap buket dibuat sesuai pesanan.</p>
   </header>
 
+  <div class="pencarian" role="search">
+  <input id="cari-produk" type="search" placeholder="Cari nama buket..." autocomplete="off" />
+  <button id="tombol-cari" type="button" aria-label="Cari buket">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="10.8" cy="10.8" r="6.8"></circle>
+      <path d="m16 16 5 5"></path>
+    </svg>
+  </button>
+</div>
+
   <div class="filter" role="group" aria-label="Filter jenis bunga">
     <button data-filter="semua" aria-pressed="true">Semua</button>
     {categories.map((c) => <button data-filter={c.slug} aria-pressed="false">{c.name}</button>)}
@@ -20,23 +30,77 @@ const { products, categories } = await getKatalog();
 
   <ul class="grid">
     {products.map((p) => (
-      <li data-kat={p.category?.slug ?? ''}><ProductCard product={p} /></li>
+      <li
+  data-kat={p.category?.slug ?? ''}
+  data-nama={p.name.toLocaleLowerCase('id')}
+>
+  <ProductCard product={p} />
+</li>
     ))}
   </ul>
+
+  <p id="hasil-kosong" hidden>Tidak ada buket yang cocok. Coba kata lain.</p>
+
 </Layout>
 
 <script>
-  const tombol = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
-  const item = document.querySelectorAll<HTMLElement>('[data-kat]');
+  const tombolFilter = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const produk = document.querySelectorAll<HTMLElement>('[data-kat]');
+  const inputCari = document.getElementById('cari-produk') as HTMLInputElement;
+  inputCari.value = new URLSearchParams(window.location.search).get('q') ?? '';
+  const tombolCari = document.getElementById('tombol-cari') as HTMLButtonElement;
+  const pesanKosong = document.getElementById('hasil-kosong') as HTMLParagraphElement;
 
-  function pilih(slug: string) {
-    tombol.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.filter === slug)));
-    item.forEach((i) => { i.hidden = slug !== 'semua' && i.dataset.kat !== slug; });
-    history.replaceState(null, '', slug === 'semua' ? location.pathname : '#' + slug);
+  let kategoriAktif = 'semua';
+
+  function terapkanFilter() {
+    const kata = inputCari.value.trim().toLocaleLowerCase('id');
+    let jumlahTampil = 0;
+
+    produk.forEach((item) => {
+      const cocokKategori =
+        kategoriAktif === 'semua' || item.dataset.kat === kategoriAktif;
+      const cocokNama = (item.dataset.nama ?? '').includes(kata);
+      const tampil = cocokKategori && cocokNama;
+
+      item.hidden = !tampil;
+      if (tampil) jumlahTampil++;
+    });
+
+    pesanKosong.hidden = jumlahTampil > 0;
   }
-  tombol.forEach((t) => t.addEventListener('click', () => pilih(t.dataset.filter!)));
+
+  tombolFilter.forEach((tombol) => {
+    tombol.addEventListener('click', () => {
+      kategoriAktif = tombol.dataset.filter!;
+
+      tombolFilter.forEach((item) =>
+        item.setAttribute('aria-pressed', String(item === tombol))
+      );
+
+      history.replaceState(
+        null,
+        '',
+        kategoriAktif === 'semua' ? location.pathname : '#' + kategoriAktif
+      );
+
+      terapkanFilter();
+    });
+  });
+
+  tombolCari.addEventListener('click', terapkanFilter);
+  inputCari.addEventListener('input', terapkanFilter);
+
   const awal = location.hash.slice(1);
-  pilih([...tombol].some((t) => t.dataset.filter === awal) ? awal : 'semua');
+  kategoriAktif = [...tombolFilter].some((t) => t.dataset.filter === awal)
+    ? awal
+    : 'semua';
+
+  tombolFilter.forEach((tombol) =>
+    tombol.setAttribute('aria-pressed', String(tombol.dataset.filter === kategoriAktif))
+  );
+
+  terapkanFilter();
 </script>
 
 <style>
@@ -48,4 +112,59 @@ const { products, categories } = await getKatalog();
   .filter button { font: 500 .7rem var(--sans); letter-spacing: .16em; text-transform: uppercase; padding: .7rem 1.4rem; border: 1px solid var(--garis); border-radius: 999px; background: transparent; color: var(--ivory); cursor: pointer; transition: border-color .25s, background .25s, color .25s; }
   .filter button:hover { border-color: var(--gold); }
   .filter button[aria-pressed='true'] { background: var(--gold); border-color: var(--gold); color: var(--black); }
+
+    .pencarian {
+    display: flex;
+    width: calc(100% - 2rem);
+    max-width: 32rem;
+    margin: 0 auto 1.5rem;
+    border: 1px solid var(--garis);
+    background: var(--kartu);
+  }
+
+  .pencarian:focus-within {
+    border-color: var(--gold);
+  }
+
+  .pencarian input {
+    flex: 1;
+    min-width: 0;
+    padding: .9rem 1rem;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ivory);
+    font: inherit;
+  }
+
+  .pencarian input::placeholder {
+    color: var(--redup);
+  }
+
+  .pencarian button {
+    display: grid;
+    width: 3.2rem;
+    place-items: center;
+    border: 0;
+    background: var(--gold);
+    color: var(--black);
+    cursor: pointer;
+  }
+
+  .pencarian svg {
+    width: 1.3rem;
+    height: 1.3rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  #hasil-kosong {
+    padding: 1rem 0 3rem;
+    color: var(--redup);
+    text-align: center;
+  }
+
 </style>

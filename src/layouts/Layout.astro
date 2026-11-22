@@ -11,15 +11,27 @@ const tahun = new Date().getFullYear();
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{judul}</title>
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline>
+  document.documentElement.classList.add('js');
+  try {
+    if (localStorage.getItem('dqueen-tema') === 'terang') {
+      document.documentElement.dataset.tema = 'terang';
+    }
+  } catch {}
+</script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body>
+
     <div class="pengumuman">
-      <p>Buket dirangkai sesuai pesanan <span aria-hidden="true">✦</span> Pesan mudah lewat WhatsApp</p>
-    </div>
+  <p>
+    <span class="pengumuman-pesan">Buket dirangkai sesuai pesanan</span>
+    <span class="pemisah-pengumuman" aria-hidden="true">✦</span>
+    <span class="pengumuman-wa">Pesan mudah lewat WhatsApp</span>
+  </p>
+</div>
 
     <header class="atas">
       <div class="atas-isi">
@@ -65,6 +77,15 @@ const tahun = new Date().getFullYear();
     Bantuan
   </a>
 </nav>
+
+  <button
+  id="tema-toggle"
+  class="tema-toggle"
+  type="button"
+  aria-label="Aktifkan tema terang"
+  title="Ubah tema"
+>☼</button>
+
         </div>
       </div>
 
@@ -130,6 +151,35 @@ const tahun = new Date().getFullYear();
     })
   );
 
+    const tombolTema = document.getElementById('tema-toggle') as HTMLButtonElement | null;
+  const akar = document.documentElement;
+
+  function segarkanTombolTema() {
+    const terang = akar.dataset.tema === 'terang';
+    if (!tombolTema) return;
+
+    tombolTema.textContent = terang ? '☾' : '☼';
+    tombolTema.setAttribute(
+      'aria-label',
+      terang ? 'Aktifkan tema gelap' : 'Aktifkan tema terang'
+    );
+  }
+
+  segarkanTombolTema();
+
+  tombolTema?.addEventListener('click', () => {
+    const terang = akar.dataset.tema !== 'terang';
+
+    if (terang) akar.dataset.tema = 'terang';
+    else akar.removeAttribute('data-tema');
+
+    try {
+      localStorage.setItem('dqueen-tema', terang ? 'terang' : 'gelap');
+    } catch {}
+
+    segarkanTombolTema();
+  });
+
   // Smooth reveal
   const items = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window) {
@@ -167,11 +217,25 @@ const tahun = new Date().getFullYear();
     --daun: #7ea58a; --garis: #34272b; --redup: #a99d90;
     --serif: 'Cormorant Garamond', Georgia, serif; --sans: 'Jost', system-ui, sans-serif;
     /* Token baru */
-    --black: #0a0708; --panel: #150f11; --ivory: #f1e8dc;
+    --black: #0a0708; --panel: #150f11; --ivory: #f1e8dc; --kartu: #1b1416;
     --burgundy: #4a1424; --burgundy-2: #7a2540;
     --gold: #c8a96a; --gold-light: #e6d3a3;
     --ease: cubic-bezier(.2,.7,.2,1);
   }
+
+  :root[data-tema="terang"] {
+  --kertas: #fbf8f3;
+  --tinta: #342a25;
+  --lilac: #f1e8eb;
+  --garis: #e5d9d0;
+  --redup: #756a62;
+  --panel: #f4ece4;
+  --ivory: #342a25;
+  --gold: #94672f;
+  --gold-light: #795321;
+  --kartu: #fffdf9;
+}
+
   *, *::before, *::after { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html { scroll-behavior: smooth; }
@@ -188,10 +252,13 @@ const tahun = new Date().getFullYear();
   /* Announcement bar */
   .pengumuman { background: var(--burgundy); color: var(--gold-light); text-align: center; padding: .55rem 1rem; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; }
   .pengumuman p { margin: 0; }
-  .pengumuman span { margin: 0 .6rem; color: var(--gold); }
+  .pemisah-pengumuman {
+  margin: 0 .6rem;
+  color: var(--gold);
+}
 
   /* Header: logo di tengah */
-  .atas { position: sticky; top: 0; z-index: 50; background: rgba(13,10,11,.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid #ffffff14; }
+  .atas { position: sticky; top: 0; z-index: 50; background: rgba(13,10,11,.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid #ffffff14; }
   .atas-isi { max-width: 84rem; margin: 0 auto; padding: 1.1rem 2rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; }
   .merek { font: 500 1.8rem/1 var(--serif); text-decoration: none; color: var(--ivory); letter-spacing: .01em; text-align: center; }
   .merek em { font-style: italic; color: var(--gold); }
@@ -203,8 +270,15 @@ const tahun = new Date().getFullYear();
   .menu a:hover::after { transform: scaleX(1); }
   .ke-keranjang { display: inline-flex; align-items: center; gap: .55rem; color: var(--gold-light); }
   #jml-keranjang { display: inline-block; min-width: 1.35rem; padding: 0 .4rem; border-radius: 999px; background: var(--gold); color: var(--black); font-size: .7rem; font-weight: 500; line-height: 1.35rem; text-align: center; letter-spacing: 0; }
+  
   .menu-btn { display: none; width: 2.4rem; height: 2.4rem; background: none; border: 0; padding: 0; cursor: pointer; flex-direction: column; justify-content: center; gap: 6px; }
-  .menu-btn span { display: block; height: 1px; background: var(--ivory); width: 1.5rem; }
+  .menu-btn span {
+  display: block;
+  width: 1.5rem;
+  height: 2px;
+  background: #f1e8dc;
+  flex: 0 0 auto;
+}
   .menu-mobile { display: none; }
 
   @media (max-width: 960px) {
@@ -215,7 +289,24 @@ const tahun = new Date().getFullYear();
     .kanan { gap: 0; }
     .menu-mobile { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; background: var(--black); border-bottom: 1px solid #ffffff14; padding: .5rem 1.25rem 1rem; }
     .menu-mobile.buka { display: flex; }
-    .menu-mobile a { text-decoration: none; padding: .95rem 0; border-bottom: 1px solid #ffffff12; font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; }
+    .menu-mobile a {
+  color: #f1e8dc;
+  text-decoration: none;
+  padding: .95rem 0;
+  border-bottom: 1px solid #ffffff20;
+  font-size: .78rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+    .pemisah-pengumuman {
+  display: none;
+}
+
+.pengumuman-wa {
+  display: block;
+  margin-top: .2rem;
+}
+
   }
 
   /* Footer */
@@ -247,4 +338,56 @@ const tahun = new Date().getFullYear();
     html { scroll-behavior: auto; }
     .js .reveal { opacity: 1; transform: none; transition: none; }
   }
+
+  :root[data-tema="terang"] .pengumuman {
+  color: #f1e8dc;
+}
+
+:root[data-tema="terang"] .atas .merek,
+:root[data-tema="terang"] .atas .menu a,
+:root[data-tema="terang"] .atas .ke-keranjang {
+  color: #f1e8dc;
+}
+
+:root[data-tema="terang"] .atas .merek em {
+  color: #c8a96a;
+}
+
+:root[data-tema="terang"] .menu a::after {
+  background: #c8a96a;
+}
+
+.tema-toggle {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 1px solid #c8a96a;
+  border-radius: 50%;
+  background: transparent;
+  color: #e6d3a3;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tema-toggle:hover {
+  background: #c8a96a;
+  color: #0a0708;
+}
+
+:root[data-tema="terang"] .hero .eyebrow,
+:root[data-tema="terang"] .hero h1,
+:root[data-tema="terang"] .hero .btn-pill {
+  color: #f1e8dc;
+}
+
+:root[data-tema="terang"] .hero h1 em {
+  color: #e6d3a3;
+}
+
+:root[data-tema="terang"] .lic .out {
+  -webkit-text-stroke-color: #9a806b;
+}
+
 </style>

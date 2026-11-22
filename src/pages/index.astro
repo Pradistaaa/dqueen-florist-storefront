@@ -34,10 +34,44 @@ const bestseller = ambilSlug(bestsellerSlug, products.slice(0, 8));
 
 // ---- Testimoni: isi dengan testimoni ASLI pelanggan. Kosong = section otomatis disembunyikan. ----
 // Contoh format: { nama: 'Nama Pelanggan', momen: 'Hari Ibu', teks: 'Isi testimoni asli...' }
-const testimoni: { nama: string; momen: string; teks: string }[] = [];
+const testimoni: { nama: string; momen: string; teks: string }[] = [
+  {
+    nama: 'Nunu Wahab',
+    momen: 'Ulasan Pelanggan',
+    teks: 'Desain buketnya cantik dan rapi, sesuai dengan permintaan. Buket sampai dengan rapi.',
+  },
+  {
+    nama: 'Ratna Siregar',
+    momen: 'Ulasan Pelanggan',
+    teks: 'Suka dengan hasil rangkaiannya, sesuai dengan permintaan yang saya sampaikan ke admin. Pasti order lagi!',
+  },
+  {
+    nama: 'Teddy Sendjaja',
+    momen: 'Ulasan Pelanggan',
+    teks: 'Desain bunganya cantik sekali, dan pengirimannya tepat waktu.',
+  },
+  {
+    nama: 'Pra Dista',
+    momen: 'Ulasan Pelanggan',
+    teks: 'Bagus banget hasilnya, nggak kecewa. Selalu repeat order di sini. Recommended banget!',
+  },
+  {
+    nama: 'Wita Picture',
+    momen: 'Ulasan Pelanggan',
+    teks: 'Toko bunga yang kreatif dan profesional. Pelayanannya ramah dan responsif, bunganya segar dengan desain elegan.',
+  },
+  {
+    nama: 'Kazruni Yahya',
+    momen: 'Ulasan Pelanggan',
+    teks: 'Bahan papan namanya tebal. Warna balon sesuai permintaan, dan pita mengikuti saran tim.',
+  },
+];
 ---
 
 <Layout wide>
+
+  <!-- 3. HERO CINEMATIC -->
+
   <!-- 3. HERO CINEMATIC -->
   <section class="hero">
     <div class="hero-photo">
@@ -63,6 +97,25 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [];
       <h2 class="lic"><span class="out">PILIH BUNGA</span><span class="solid">UNTUK MOMENMU</span></h2>
       <a class="tlink" href="/katalog">Lihat Semua Produk ↗</a>
     </div>
+
+      <form class="search-home" action="/katalog" method="get" role="search">
+    <input
+      type="search"
+      name="q"
+      placeholder="Cari buket, misalnya mawar..."
+      aria-label="Cari nama buket"
+      autocomplete="off"
+    />
+    <button type="submit">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+        <path d="m16 16 5 5"></path>
+      </svg>
+      <span>Cari</span>
+    </button>
+  </form>
+
+  <!-- 3. HERO CINEMATIC -->
 
     <div class="kol-grid">
       {koleksi.map((c, i) => (
@@ -196,6 +249,15 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [];
   .hero-copy { position: relative; z-index: 2; padding: 6rem 1.5rem 8rem; max-width: 62rem; }
   .hero h1 { text-shadow: 0 2px 30px #000a; font-size: clamp(2.8rem, 6.6vw, 5.8rem); line-height: 1.02; letter-spacing: .01em; text-transform: uppercase; font-weight: 400; margin: 1.8rem 0 1.6rem; color: var(--ivory); }
   .hero h1 em { text-transform: none; color: var(--gold-light); }
+
+  :global(html[data-tema="terang"]) .hero h1 {
+  color: #fff8ed;
+}
+
+:global(html[data-tema="terang"]) .hero h1 em {
+  color: #f0cf83;
+}
+
   .hero-copy p { max-width: 27rem; margin: 0 auto 2.4rem; color: #d9cdc0; font-size: 1.02rem; line-height: 1.9; }
   .hero-card { position: absolute; z-index: 3; left: 4rem; bottom: 3.5rem; width: 13.5rem; padding: .6rem; border: 1px solid #ffffff55; border-radius: 1.5rem; background: #0a07088c; backdrop-filter: blur(6px); text-decoration: none; text-align: center; color: var(--ivory); transition: transform .4s var(--ease), border-color .3s; }
   .hero-card:hover { transform: translateY(-6px); border-color: var(--gold); }
@@ -207,6 +269,9 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [];
   /* KOLEKSI (gaya editorial bernomor) */
   .lic { margin: 0; display: flex; flex-direction: column; line-height: .95; text-transform: uppercase; font-weight: 400; font-size: clamp(3.4rem, 8.5vw, 7rem); letter-spacing: .01em; }
   .lic .out { color: transparent; -webkit-text-stroke: 1px #f1e8dcb0; }
+  :global(html[data-tema="terang"]) .lic .out {
+  -webkit-text-stroke: 1px #8f725d;
+}
   .lic .solid { color: var(--gold); margin-left: clamp(1.5rem, 5vw, 4rem); }
   .kol-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
   .kol { display: block; text-decoration: none; color: var(--ivory); }
@@ -316,4 +381,90 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [];
     .season-mini { max-width: none; }
     .closing { padding: 5.5rem 1.25rem; }
   }
+
+    .search-home {
+    display: flex;
+    width: calc(100% - 2rem);
+    max-width: 38rem;
+    margin: 1.25rem auto;
+    border: 1px solid var(--garis);
+    background: var(--kartu);
+  }
+
+  .search-home:focus-within {
+    border-color: var(--gold);
+  }
+
+  .search-home input {
+    flex: 1;
+    min-width: 0;
+    padding: .85rem 1rem;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ivory);
+    font: inherit;
+  }
+
+  .search-home input::placeholder {
+    color: var(--redup);
+  }
+
+  .search-home button {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    padding: 0 1rem;
+    border: 0;
+    background: var(--gold);
+    color: var(--black);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .search-home svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .hero h1 {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(
+    110deg,
+    #f1e8dc 0%,
+    #c8a96a 28%,
+    #fff8e8 50%,
+    #a98245 72%,
+    #f1e8dc 100%
+  );
+  background-size: 240% 100%;
+  background-position: 100% 50%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: kilau-judul 9s ease-in-out infinite alternate;
+}
+
+.hero h1 em {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes kilau-judul {
+  to {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero h1 {
+    animation: none;
+  }
+}
+
 </style>
