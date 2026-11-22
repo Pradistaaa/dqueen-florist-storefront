@@ -113,7 +113,14 @@ function info(v: Variant) {
   .remah a:hover { color: var(--gold-light); }
   .isi { display: grid; gap: 2rem; }
   @media (min-width: 800px) { .isi { grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: start; } .info { position: sticky; top: 6rem; } }
-  #foto-utama, .kosong { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; background: var(--lilac); display: block; border: 1px solid #ffffff14; }
+  #foto-utama, .kosong {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: contain;
+  background: var(--lilac);
+  display: block;
+  border: 1px solid #ffffff14;
+}
   .thumbs { display: flex; gap: .5rem; margin-top: .75rem; overflow-x: auto; padding-bottom: .25rem; }
   .thumbs button { flex: 0 0 4rem; padding: 0; border: 1px solid var(--garis); background: none; cursor: pointer; transition: border-color .25s; }
   .thumbs button:hover { border-color: var(--gold); }
@@ -134,4 +141,38 @@ function info(v: Variant) {
   .pesan:disabled { background: var(--garis); color: var(--redup); cursor: not-allowed; }
   .catatan { color: var(--redup); font-size: .9rem; margin: .7rem 0 0; }
   .catatan :global(a) { color: var(--gold-light); }
+
+  .galeri,
+.info {
+  min-width: 0;
+}
+
+.thumbs {
+  max-width: 100%;
+}
+
+.varian {
+  max-width: 100%;
+}
+
+.varian button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 799px) {
+  .isi {
+    gap: 1.5rem;
+  }
+
+  .varian {
+    gap: .45rem;
+  }
+
+  .varian button {
+    padding: .55rem .85rem;
+    font-size: .85rem;
+  }
+}
+
 </style>

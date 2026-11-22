@@ -284,7 +284,33 @@ const tahun = new Date().getFullYear();
   @media (max-width: 960px) {
     .menu-btn { display: flex; }
     .menu-kiri, .menu-kanan { display: none; }
-    .atas-isi { grid-template-columns: auto 1fr auto; padding: .85rem 1.1rem; }
+    .atas-isi {
+  grid-template-columns: 2.4rem 1fr auto;
+  gap: .65rem;
+  padding: .85rem 1rem;
+}
+
+.kanan {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ke-keranjang {
+  gap: .35rem;
+  letter-spacing: .08em;
+}
+
+.ikon-keranjang {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.ke-keranjang {
+  margin-right: .75rem;
+}
+
     .merek { font-size: 1.55rem; }
     .kanan { gap: 0; }
     .menu-mobile { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; background: var(--black); border-bottom: 1px solid #ffffff14; padding: .5rem 1.25rem 1rem; }
