@@ -6,16 +6,16 @@ import { getKatalog } from '../../lib/katalog';
 export const prerender = true;
 const { products, categories } = await getKatalog();
 ---
-<Layout title="Katalog" description="Katalog buket dQueen Florist.">
+<Layout title="Katalog" description="Katalog bunga, dekorasi, dan hadiah dQueen Florist.">
   <header class="kepala">
     <span class="garis"></span>
     <h1 class="judul">Katalog</h1>
-    <p>Pilih rangkaian favoritmu, tiap buket dibuat sesuai pesanan.</p>
+    <p>Temukan bunga, dekorasi, dan hadiah untuk berbagai momen.</p>
   </header>
 
   <div class="pencarian" role="search">
-  <input id="cari-produk" type="search" placeholder="Cari nama buket..." autocomplete="off" />
-  <button id="tombol-cari" type="button" aria-label="Cari buket">
+  <input id="cari-produk" type="search" placeholder="Cari produk, misalnya pita peresmian..." autocomplete="off" />
+  <button id="tombol-cari" type="button" aria-label="Cari produk">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="10.8" cy="10.8" r="6.8"></circle>
       <path d="m16 16 5 5"></path>
@@ -32,14 +32,14 @@ const { products, categories } = await getKatalog();
     {products.map((p) => (
       <li
   data-kat={p.category?.slug ?? ''}
-  data-nama={p.name.toLocaleLowerCase('id')}
+  data-nama={`${p.name} ${p.source_name ?? ''}`.toLocaleLowerCase('id')}
 >
   <ProductCard product={p} />
 </li>
     ))}
   </ul>
 
-  <p id="hasil-kosong" hidden>Tidak ada buket yang cocok. Coba kata lain.</p>
+  <p id="hasil-kosong" hidden>Tidak ada produk yang cocok. Coba kata lain.</p>
 
 </Layout>
 

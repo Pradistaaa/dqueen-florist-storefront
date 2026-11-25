@@ -1,6 +1,6 @@
 // Keranjang disimpan di browser (localStorage). Harga di sini HANYA untuk tampilan:
 // saat checkout, server menghitung ulang harga dari database berdasarkan variantId.
-const KUNCI = 'dq-keranjang';
+const KUNCI = 'dq-keranjang-katalog-lokal-v2';
 
 export interface Item {
   variantId: string; qty: number; produk: string; varian: string;

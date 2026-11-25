@@ -1,6 +1,7 @@
 import { Buffer } from 'node:buffer';
 import type { APIRoute } from 'astro';
 import { createClient } from '@supabase/supabase-js';
+import { getVarianLokal } from '../../lib/katalog';
 
 export const prerender = false;
 
@@ -45,20 +46,14 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const ids = [...qtyByVariant.keys()];
-    const [{ data: variants, error: variantError }, { data: zone, error: zoneError }] =
-      await Promise.all([
-        db.from('product_variants')
-          .select('id,product_id,name,price,price_unit')
-          .in('id', ids)
-          .eq('is_active', true),
-        db.from('delivery_zones')
-          .select('id,fee')
-          .eq('id', body.delivery_zone_id)
-          .eq('is_active', true)
-          .maybeSingle(),
-      ]);
+    const variants = getVarianLokal(ids);
+    const { data: zone, error: zoneError } = await db.from('delivery_zones')
+      .select('id,fee')
+      .eq('id', body.delivery_zone_id)
+      .eq('is_active', true)
+      .maybeSingle();
 
-    if (variantError || !variants || variants.length !== ids.length) {
+    if (variants.length !== ids.length) {
       return json({ error: 'Ada produk yang sudah tidak tersedia. Muat ulang keranjang.' }, 400);
     }
     if (zoneError || !zone) {
@@ -104,9 +99,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     const orderItems = variants.map((v) => ({
       order_id: order.id,
-      product_id: v.product_id,
-      variant_id: v.id,
-      product_name: String(body.productNames?.[v.id] ?? 'Rangkaian bunga'),
+      product_id: null,
+      variant_id: null,
+      product_name: v.product.name,
       variant_name: v.name,
       unit_price: v.price,
       qty: qtyByVariant.get(v.id)!,

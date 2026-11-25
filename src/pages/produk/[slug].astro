@@ -16,7 +16,6 @@ function info(v: Variant) {
   return [
     ['Proses', v.process_time],
     ['Ketahanan', v.freshness],
-    ['Pemesanan', v.order_lead],
     ['Warna', v.custom_color ? 'Bisa custom warna' : null],
     ['Kartu ucapan', v.greeting_revisable === false ? 'Tidak bisa direvisi' : v.greeting_revisable ? 'Bisa direvisi' : null],
     ['Isi', v.includes_doll ? 'Termasuk boneka' : null],
@@ -41,8 +40,8 @@ function info(v: Variant) {
     <div class="info">
       <h1>{product.name}</h1>
 
-      <h2 class="sub">Pilih varian</h2>
-      <div class="varian">
+      <h2 class="sub" hidden={product.variants.length === 1}>Pilih varian</h2>
+      <div class="varian" hidden={product.variants.length === 1}>
         {product.variants.map((v, i) => (
           <button data-varian={String(i)} data-foto={v.image_url ?? ''} data-id={v.id} data-harga={String(v.price)} data-unit={v.price_unit} data-nama={v.name} aria-pressed={String(i === 0)}>{v.name}</button>
         ))}
@@ -51,9 +50,9 @@ function info(v: Variant) {
       {product.variants.map((v, i) => (
         <section data-panel={String(i)} hidden={i !== 0}>
           <p class="harga">{rupiah(v.price)}<small>{satuan[v.price_unit] ?? ''}</small></p>
-          <dl>
+          {info(v).length > 0 && <dl>
             {info(v).map(([k, isi]) => <><dt>{k}</dt><dd>{isi}</dd></>)}
-          </dl>
+          </dl>}
         </section>
       ))}
 

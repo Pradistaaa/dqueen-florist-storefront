@@ -14,21 +14,30 @@ const heroFoto = '/hero/hero.jpg';
 const heroFotoHP = '/hero/hero-mobile.jpg';
 
 // ---- Koleksi (kategori) dengan foto ----
-const koleksi = categories.slice(0, 4).map((c) => ({
-  ...c,
-  total: products.filter((p) => p.category?.id === c.id).length,
-  foto: products.find((p) => p.category?.id === c.id && p.fotos?.[0])?.fotos?.[0],
-}));
-
-// ---- Produk ----
-// Isi slug produk andalan lo (lihat kolom slug di Supabase). Kosong = pakai 8 produk pertama.
-const bestsellerSlug: string[] = [];
-
-const ambilSlug = (slugs: string[], cadangan: Product[]) => {
-  const hasil = slugs.map((s) => products.find((p) => p.slug === s)).filter(Boolean) as Product[];
-  return hasil.length ? hasil : cadangan;
+const fotoKategori = {
+  'bunga-box': 'bunga-box-p006',
+  'pita-peresmian': 'pita-peresmian-p011',
+  'bunga-papan-akrilik': 'bunga-papan-akrilik-p006',
+  'bunga-papan-biasa': 'bunga-papan-biasa-p021',
 };
-const bestseller = ambilSlug(bestsellerSlug, products.slice(0, 8));
+const koleksi = categories.slice(0, 4).map((c) => {
+  const slugFoto = fotoKategori[c.slug as keyof typeof fotoKategori];
+  const fotoPilihan = slugFoto ? products.find((p) => p.slug === slugFoto) : undefined;
+  return {
+    ...c,
+    total: products.filter((p) => p.category?.id === c.id).length,
+    foto: fotoPilihan?.fotos?.[0] ?? products.find((p) => p.category?.id === c.id && p.fotos?.[0])?.fotos?.[0],
+  };
+});
+
+// Pilih model dengan foto produk yang paling jelas untuk kartu Rangkaian Pilihan.
+const urutanKategoriPilihan = [
+  'bunga-box-p005', 'pita-peresmian-p009', 'bunga-papan-akrilik-p010', 'bunga-papan-biasa-p022',
+  'standing-flowers-p003', 'papan-balon-p004', 'graduation-p004', 'buket-bunga-p002',
+];
+const produkPilihan = urutanKategoriPilihan
+  .map((slug) => products.find((p) => p.slug === slug))
+  .filter((p): p is Product => Boolean(p));
 
 // ---- Seasonal: ganti teks ini tiap musim ----
 
@@ -130,19 +139,19 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [
     </div>
   </section>
 
-  <!-- 5. BUKET TERLARIS -->
+  <!-- 5. PILIHAN PRODUK -->
   <section class="sec sec-panel" id="bestseller">
     <div class="wrap">
       <div class="head reveal">
         <div>
-          <span class="eyebrow"><i></i>Favorit pelanggan</span>
-          <h2 class="judul">Buket <em>terlaris.</em></h2>
+          <span class="eyebrow"><i></i>Pilihan dQueen</span>
+          <h2 class="judul">Rangkaian <em>pilihan.</em></h2>
         </div>
         <a class="tlink" href="/katalog">Belanja semua ↗</a>
       </div>
 
       <ul class="bs-grid">
-        {bestseller.map((p, i) => (
+        {produkPilihan.map((p, i) => (
           <li class="bs-item reveal" style={`--d:${(i % 4) * 0.08}s`}>
             <span class="bs-no">dQ. / {String(i + 1).padStart(2, '0')}</span>
             <ProductCard product={p} />
@@ -295,6 +304,15 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [
   .bs-item:hover { transform: translateY(-6px); box-shadow: 0 24px 44px -24px #000; border-color: var(--gold); }
   .bs-no { display: block; margin-bottom: .7rem; font: 400 .62rem var(--sans); letter-spacing: .2em; color: var(--gold); }
 
+  /* CARA BELANJA */
+  .cara-pesan { padding-top: 6rem; padding-bottom: 6rem; }
+  .cara-pesan .head { margin-bottom: 2rem; }
+  .langkah-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.8rem; }
+  .langkah-grid article { min-width: 0; padding: 1.5rem; background: var(--kartu); border: 1px solid var(--garis); }
+  .langkah-grid article > span { color: var(--gold); font: 500 .72rem var(--sans); letter-spacing: .16em; }
+  .langkah-grid h3 { margin: .7rem 0 .4rem; color: var(--ivory); font: 400 1.25rem var(--serif); }
+  .langkah-grid p { margin: 0; color: var(--redup); font-size: .9rem; line-height: 1.75; }
+
   /* EDITORIAL */
   .edit { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; padding-top: 7rem; padding-bottom: 7rem; }
   .edit-img { position: relative; aspect-ratio: 4/5; margin-bottom: 3rem; border: 1px solid #ffffff14; }
@@ -361,6 +379,7 @@ const testimoni: { nama: string; momen: string; teks: string }[] = [
     .kol-1, .kol-2, .kol-3, .kol-4 { margin-top: 0; }
     .kol-2, .kol-4 { margin-top: 2.5rem; }
     .bs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .langkah-grid { grid-template-columns: 1fr; }
     .edit { grid-template-columns: 1fr; gap: 4rem; padding-top: 4.5rem; padding-bottom: 5rem; }
     .edit-img { max-width: 30rem; }
     .edit-img2 { right: -1rem; }

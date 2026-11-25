@@ -11,14 +11,46 @@ const { product } = Astro.props;
   </div>
   <h3>{product.name}</h3>
   <p>{hargaMulai(product)}</p>
+  <div class="info-produk">
+    <span class="terjual-shopee">Terjual 1.000+</span>
+    <span class="ornamen-bintang" aria-hidden="true">★★★★★</span>
+  </div>
+  <span class="terjual" data-produk-terjual={product.name} hidden></span>
 </a>
+
+<script>
+  const muatPenjualan = async () => {
+    const elemen = document.querySelectorAll<HTMLElement>('[data-produk-terjual]');
+    if (!elemen.length) return;
+
+    try {
+      const response = await fetch('/api/penjualan-produk');
+      if (!response.ok) return;
+      const { penjualan } = await response.json();
+
+      elemen.forEach((item) => {
+        const jumlah = Number(penjualan?.[item.dataset.produkTerjual ?? ''] ?? 0);
+        if (jumlah < 1) return;
+        item.textContent = `Terjual di web ${new Intl.NumberFormat('id-ID').format(jumlah)}`;
+        item.hidden = false;
+      });
+    } catch {
+      // Kartu tetap tampil normal saat hitungan penjualan belum tersedia.
+    }
+  };
+
+  muatPenjualan();
+</script>
 
 <style>
   .kartu { display: block; text-decoration: none; color: var(--tinta); }
-  .foto { aspect-ratio: 4 / 5; overflow: hidden; background: var(--lilac); border: 1px solid #ffffff14; }
-  img, .kosong { width: 100%; height: 100%; object-fit: cover; display: block; background: var(--lilac); transition: transform 1s var(--ease); }
+  .foto { aspect-ratio: 4 / 5; overflow: hidden; background: var(--kartu); border: 1px solid #ffffff14; }
+  img, .kosong { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; background: var(--kartu); transition: transform 1s var(--ease); }
   .kartu:hover img { transform: scale(1.05); }
   h3 { font-size: 1.2rem; margin: .8rem 0 .2rem; color: var(--ivory); transition: color .25s; }
   .kartu:hover h3 { color: var(--gold-light); }
   p { margin: 0; color: var(--gold); font-size: .92rem; letter-spacing: .02em; }
+  .info-produk { display: flex; align-items: center; gap: .45rem; margin-top: .35rem; }
+  .terjual, .terjual-shopee { color: var(--redup); font: 400 .72rem var(--sans); letter-spacing: .02em; }
+  .ornamen-bintang { color: var(--gold); font: 600 .72rem/1 var(--sans); letter-spacing: .08em; white-space: nowrap; }
 </style>
